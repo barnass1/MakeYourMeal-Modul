@@ -83,5 +83,35 @@ namespace BaBoMaZso.MakeYourMeal.Controllers
             var items = ItemManager.Instance.GetItems(ModuleContext.ModuleId);
             return View(items);
         }
+
+        // ───────────────────────────────────────────────────────────────────────────────
+        // ÚJ: "Make Your Own Meal" összeállító felület
+        // ───────────────────────────────────────────────────────────────────────────────
+
+        public ActionResult Assemble()
+        {
+            // TODO: Később itt lekérheted a tészta, szósz, topping stb. opciókat
+            return View();
+        }
+
+        [HttpPost]
+        public ActionResult Assemble(Item item)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(item); // újra megjelenítjük a hibákkal
+            }
+
+            item.ModuleId = ModuleContext.ModuleId;
+            item.CreatedByUserId = User.UserID;
+            item.CreatedOnDate = DateTime.UtcNow;
+            item.LastModifiedByUserId = User.UserID;
+            item.LastModifiedOnDate = DateTime.UtcNow;
+
+            ItemManager.Instance.CreateItem(item);
+
+            // Vissza a kezdőoldalra, vagy visszajelzés oldalra
+            return RedirectToDefaultRoute();
+        }
     }
 }

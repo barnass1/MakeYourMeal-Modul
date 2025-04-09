@@ -11,6 +11,7 @@
 */
 
 using System;
+using System.Collections.Generic;
 using System.Web.Caching;
 using DotNetNuke.Common.Utilities;
 using DotNetNuke.ComponentModel.DataAnnotations;
@@ -70,5 +71,14 @@ namespace BaBoMaZso.MakeYourMeal.Models
         /// The date the object was updated
         ///</summary>
         public DateTime LastModifiedOnDate { get; set; } = DateTime.UtcNow;
+
+        public class ItemDetails
+        {
+            public string SelectedPasta { get; set; }
+            public string SelectedSauce { get; set; }
+            public List<string> SelectedToppings { get; set; } = new List<string>();
+            public List<string> SelectedExtras { get; set; } = new List<string>();
+        }
+
     }
 }
