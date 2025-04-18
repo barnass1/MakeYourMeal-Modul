@@ -1,10 +1,8 @@
-﻿@inherits DotNetNuke.Web.Mvc.Framework.DnnWebViewPage<IEnumerable< BaBoMaZso.MakeYourMeal.Models.Item >>
+﻿@inherits DotNetNuke.Web.Mvc.Framework.DnnWebViewPage
+@using System.Web.Mvc
 
-@using System.Text.RegularExpressions
-@using DotNetNuke.Web.Mvc.Helpers
-
-
-<div id="Items-@Dnn.ModuleContext.ModuleId">
+<div class="meal-promo" style="margin-bottom: 1.5em; padding: 1em; background-color: #f9f9f9; border-left: 4px solid #ff6600;">
     <h2>Állítsd össze saját tésztádat!</h2>
-    <!-- Ide jön majd a léptetős választó UI -->
+    <p>Válassz tésztát, szószt, feltéteket és extrákat, hogy elkészítsd a személyre szabott ebédedet!</p>
+    <a class="dnnPrimaryAction" href="@Url.Action("Assemble", "Item")">Új rendelés leadása</a>
 </div>

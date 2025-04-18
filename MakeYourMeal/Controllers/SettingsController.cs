@@ -10,6 +10,7 @@
 ' 
 */
 
+using System;
 using System.Web.Mvc;
 using DotNetNuke.Collections;
 using DotNetNuke.Security;
@@ -22,25 +23,22 @@ namespace BaBoMaZso.MakeYourMeal.Controllers
     [DnnHandleError]
     public class SettingsController : DnnController
     {
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
         [HttpGet]
         public ActionResult Settings()
         {
-            var settings = new Models.Settings();
-            settings.Setting1 = ModuleContext.Configuration.ModuleSettings.GetValueOrDefault("MakeYourMeal_Setting1", false);
-            settings.Setting2 = ModuleContext.Configuration.ModuleSettings.GetValueOrDefault("MakeYourMeal_Setting2", System.DateTime.Now);
+            var settings = new Models.Settings
+            {
+                Setting1 = ModuleContext.Configuration.ModuleSettings.GetValueOrDefault("MakeYourMeal_Setting1", false),
+                Setting2 = ModuleContext.Configuration.ModuleSettings.GetValueOrDefault("MakeYourMeal_Setting2", DateTime.Now),
+                MaxExtras = ModuleContext.Configuration.ModuleSettings.GetValueOrDefault("MakeYourMeal_MaxExtras", 5),
+                ExtraPriceMultiplier = ModuleContext.Configuration.ModuleSettings.GetValueOrDefault("MakeYourMeal_ExtraPriceMultiplier", 1.0m),
+                EnabledCategorySlugs = ModuleContext.Configuration.ModuleSettings.GetValueOrDefault("MakeYourMeal_EnabledCategorySlugs", "pastas,sauces,toppings1,toppings2,extras"),
+                NoticeText = ModuleContext.Configuration.ModuleSettings.GetValueOrDefault("MakeYourMeal_NoticeText", "Kérjük, válasszon legalább egy feltétet!")
+            };
 
             return View(settings);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="supportsTokens"></param>
-        /// <returns></returns>
         [HttpPost]
         [ValidateInput(false)]
         [DotNetNuke.Web.Mvc.Framework.ActionFilters.ValidateAntiForgeryToken]
@@ -48,6 +46,10 @@ namespace BaBoMaZso.MakeYourMeal.Controllers
         {
             ModuleContext.Configuration.ModuleSettings["MakeYourMeal_Setting1"] = settings.Setting1.ToString();
             ModuleContext.Configuration.ModuleSettings["MakeYourMeal_Setting2"] = settings.Setting2.ToUniversalTime().ToString("u");
+            ModuleContext.Configuration.ModuleSettings["MakeYourMeal_MaxExtras"] = settings.MaxExtras.ToString();
+            ModuleContext.Configuration.ModuleSettings["MakeYourMeal_ExtraPriceMultiplier"] = settings.ExtraPriceMultiplier.ToString();
+            ModuleContext.Configuration.ModuleSettings["MakeYourMeal_EnabledCategorySlugs"] = settings.EnabledCategorySlugs;
+            ModuleContext.Configuration.ModuleSettings["MakeYourMeal_NoticeText"] = settings.NoticeText;
 
             return RedirectToDefaultRoute();
         }

@@ -1,136 +1,135 @@
 ﻿/*
 ' Copyright (c) 2025 Wok and Roll
-'  All rights reserved.
-' 
-' THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
-' TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-' THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
-' CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-' DEALINGS IN THE SOFTWARE.
+' All rights reserved.
 */
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web.Mvc;
-using BaBoMaZso.MakeYourMeal.Components;
 using BaBoMaZso.MakeYourMeal.Models;
 using DotNetNuke.Entities.Users;
 using DotNetNuke.Framework.JavaScriptLibraries;
 using DotNetNuke.Web.Mvc.Framework.ActionFilters;
 using DotNetNuke.Web.Mvc.Framework.Controllers;
-using Hotcakes.Commerce;                
-using Hotcakes.Commerce.Catalog;    
+using Hotcakes.Commerce;
+using Hotcakes.Commerce.Catalog;
+using Hotcakes.Commerce.Orders;
 
 namespace BaBoMaZso.MakeYourMeal.Controllers
 {
     [DnnHandleError]
     public class ItemController : DnnController
     {
-        private readonly HotcakesApplication HccApp = HotcakesApplication.Current; 
-        private List<SelectListItem> GetToppingsFromHotcakes()
+        private readonly HotcakesApplication _hcc = HotcakesApplication.Current;
+
+        // Segéd: lekérhető terméklista egy adott kategória slug alapján
+        private IEnumerable<SelectListItem> GetOptionsByCategorySlug(string slug)
         {
-            string toppingsCategoryId = "ac43dc33-306b-4fed-b905-afa01c66ac0d";
+            var category = _hcc.CatalogServices.Categories.FindBySlug(slug);
+            if (category == null) return Enumerable.Empty<SelectListItem>();
 
-            var criteria = new ProductSearchCriteria
-            {
-                CategoryId = toppingsCategoryId
-            };
-
+            var criteria = new ProductSearchCriteria { CategoryId = category.Bvin };
             int totalCount = 0;
-            var toppings = HccApp.CatalogServices.Products.FindByCriteria(criteria, 1, int.MaxValue, ref totalCount);
+            var products = _hcc.CatalogServices.Products.FindByCriteria(criteria, 1, 100, ref totalCount);
 
-            var selectList = toppings.Select(p => new SelectListItem
+            return products.Select(p => new SelectListItem
             {
                 Text = p.ProductName,
                 Value = p.Bvin
-            }).ToList();
-
-            return selectList;
+            });
         }
 
-        public ActionResult Delete(int itemId)
-        {
-            ItemManager.Instance.DeleteItem(itemId, ModuleContext.ModuleId);
-            return RedirectToDefaultRoute();
-        }
-
-        public ActionResult Edit(int itemId = -1)
-        {
-            DotNetNuke.Framework.JavaScriptLibraries.JavaScript.RequestRegistration(CommonJs.DnnPlugins);
-            var userlist = UserController.GetUsers(PortalSettings.PortalId);
-            var users = from user in userlist.Cast<UserInfo>().ToList()
-                        select new SelectListItem { Text = user.DisplayName, Value = user.UserID.ToString() };
-            ViewBag.Users = users;
-            ViewBag.Toppings = GetToppingsFromHotcakes();
-            var item = (itemId == -1)
-                 ? new Item { ModuleId = ModuleContext.ModuleId }
-                 : ItemManager.Instance.GetItem(itemId, ModuleContext.ModuleId);
-
-            return View(item);
-        }
-
-        [HttpPost]
-        [DotNetNuke.Web.Mvc.Framework.ActionFilters.ValidateAntiForgeryToken]
-        public ActionResult Edit(Item item)
-        {
-            if (item.ItemId == -1)
-            {
-                item.CreatedByUserId = User.UserID;
-                item.CreatedOnDate = DateTime.UtcNow;
-                item.LastModifiedByUserId = User.UserID;
-                item.LastModifiedOnDate = DateTime.UtcNow;
-
-                ItemManager.Instance.CreateItem(item);
-            }
-            else
-            {
-                var existingItem = ItemManager.Instance.GetItem(item.ItemId, item.ModuleId);
-                existingItem.LastModifiedByUserId = User.UserID;
-                existingItem.LastModifiedOnDate = DateTime.UtcNow;
-                existingItem.ItemName = item.ItemName;
-                existingItem.ItemDescription = item.ItemDescription;
-                existingItem.AssignedUserId = item.AssignedUserId;
-
-                ItemManager.Instance.UpdateItem(existingItem);
-            }
-
-            return RedirectToDefaultRoute();
-        }
-
-        [ModuleAction(ControlKey = "Edit", TitleKey = "AddItem")]
+        // ─────────────────────────────────────────────
+        // Nyitó nézet (csak új rendelés gomb, üres lista)
+        // ─────────────────────────────────────────────
+        [ModuleAction(ControlKey = "AddItem", TitleKey = "AddItem")]
         public ActionResult Index()
         {
-            var items = ItemManager.Instance.GetItems(ModuleContext.ModuleId);
-            return View(items);
+            var items = new List<Item>(); // nem használunk adatbázist most
+            return View("Index", items);
         }
 
-        // ───────────────────────────────────────────────────────────────────────────────
-        // ÚJ: "Make Your Own Meal" összeállító felület
-        // ───────────────────────────────────────────────────────────────────────────────
-
+        // ─────────────────────────────────────────────
+        // Összerakó nézet (GET)
+        // ─────────────────────────────────────────────
         public ActionResult Assemble()
         {
-            // TODO: Később itt lekérheted a tészta, szósz, topping stb. opciókat
-            return View();
+            var model = new MealViewModel
+            {
+                ModuleId = ModuleContext.ModuleId,
+                Pastas = GetOptionsByCategorySlug("pastas"),
+                Sauces = GetOptionsByCategorySlug("sauces"),
+                Toppings1 = GetOptionsByCategorySlug("toppings1"),
+                Toppings2 = GetOptionsByCategorySlug("toppings2"),
+                Extras = GetOptionsByCategorySlug("extras")
+            };
+
+            return View("Assemble", model);
         }
 
+        // ─────────────────────────────────────────────
+        // Összerakó (POST) – Kosárba tesz
+        // ─────────────────────────────────────────────
         [HttpPost]
-        public ActionResult Assemble(Item item)
+        [DotNetNuke.Web.Mvc.Framework.ActionFilters.ValidateAntiForgeryToken]
+        public ActionResult Assemble(MealViewModel model)
         {
             if (!ModelState.IsValid)
             {
-                return View(item);
+                model.Pastas = GetOptionsByCategorySlug("pastas");
+                model.Sauces = GetOptionsByCategorySlug("sauces");
+                model.Toppings1 = GetOptionsByCategorySlug("toppings1");
+                model.Toppings2 = GetOptionsByCategorySlug("toppings2");
+                model.Extras = GetOptionsByCategorySlug("extras");
+                return View("Assemble", model);
             }
 
-            item.ModuleId = ModuleContext.ModuleId;
-            item.CreatedByUserId = User.UserID;
-            item.CreatedOnDate = DateTime.UtcNow;
-            item.LastModifiedByUserId = User.UserID;
-            item.LastModifiedOnDate = DateTime.UtcNow;
+            // Leírás összeállítása
+            var description = $"Tészta: {model.SelectedPasta}, Szósz: {model.SelectedSauce}\n" +
+                              $"F1: {string.Join(", ", model.SelectedToppings1)}\n" +
+                              $"F2: {string.Join(", ", model.SelectedToppings2)}\n" +
+                              $"Extrák: {string.Join(", ", model.SelectedExtras)}";
 
-            ItemManager.Instance.CreateItem(item);
-            return RedirectToDefaultRoute();
+            // Alaptermék betöltése slug alapján
+            var baseSku = "custom-meal";
+            var product = _hcc.CatalogServices.Products.FindBySlug(baseSku);
+            if (product == null)
+            {
+                TempData["Error"] = "A 'custom-meal' nevű termék nem található. Kérjük, hozd létre a Hotcakes adminban.";
+                return RedirectToDefaultRoute();
+            }
+
+            // Extra árak számítása
+            decimal extraCost = 0m;
+            if (model.SelectedToppings1 != null && model.SelectedToppings1.Count > 1)
+                extraCost += 500m;
+            if (model.SelectedToppings2 != null && model.SelectedToppings2.Count > 1)
+                extraCost += 200m;
+
+            var basePrice = product.SitePrice;
+            var finalPrice = basePrice + extraCost;
+
+            // Kosárba helyezés
+            var cart = _hcc.OrderServices.EnsureShoppingCart();
+
+            var lineItem = new LineItem
+            {
+                ProductId = product.Bvin,
+                ProductName = "Saját étel összeállítás",
+                Quantity = 1,
+                BasePricePerItem = finalPrice,
+                LineTotal = finalPrice,
+                ProductShortDescription = description,
+                ShippingPortion = 0,
+                TaxPortion = 0
+            };
+
+            cart.Items.Add(lineItem);
+            _hcc.OrderServices.Orders.Upsert(cart);
+
+            // Kosár oldalra irányítás
+            return Redirect("/DesktopModules/Hotcakes/Core/Admin/Cart/ViewCart.aspx");
         }
     }
 }

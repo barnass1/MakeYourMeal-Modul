@@ -13,17 +13,8 @@
         <h2 id="dnnSitePanel-BasicSettings" class="dnnFormSectionHead dnnClear">
             <a href="#" class="dnnSectionExpanded">@Dnn.LocalizeString("BasicSettings")</a>
         </h2>
+
         <fieldset>
-            <div class="dnnFormItem">
-                <label for="itemName">@Dnn.LocalizeString("lblName")</label>
-                @Html.TextBoxFor(m => m.ItemName)
-            </div>
-
-            <div class="dnnFormItem">
-                <label for="itemDescription">@Dnn.LocalizeString("lblDescription")</label>
-                @Html.TextArea("itemDescription", Model.ItemDescription)
-            </div>
-
             <div class="dnnFormItem">
                 <label for="itemUser">@Dnn.LocalizeString("lblAssignedUser")</label>
                 @Html.DropDownListFor(m => m.AssignedUserId, (IEnumerable<System.Web.Mvc.SelectListItem>)ViewBag.Users, "Choose...")
@@ -32,13 +23,12 @@
             <div class="dnnFormItem">
                 <label for="toppingSelection">@Dnn.LocalizeString("lblChooseToppings")</label>
                 @Html.ListBox("toppingSelection", new List<System.Web.Mvc.SelectListItem>
-{
-    new System.Web.Mvc.SelectListItem { Text = "Sajt", Value = "cheese" },
-    new System.Web.Mvc.SelectListItem { Text = "Olívabogyó", Value = "olive" },
-    new System.Web.Mvc.SelectListItem { Text = "Csirke", Value = "chicken" },
-    new System.Web.Mvc.SelectListItem { Text = "Tofu", Value = "tofu" }
-})
-
+                {
+                    new System.Web.Mvc.SelectListItem { Text = "Sajt", Value = "cheese" },
+                    new System.Web.Mvc.SelectListItem { Text = "Olívabogyó", Value = "olive" },
+                    new System.Web.Mvc.SelectListItem { Text = "Csirke", Value = "chicken" },
+                    new System.Web.Mvc.SelectListItem { Text = "Tofu", Value = "tofu" }
+                })
             </div>
 
             @Html.HiddenFor(m => m.ModuleId)
@@ -50,7 +40,6 @@
 </div>
 
 <script type="text/javascript">
-    /*globals jQuery, window, Sys */
     (function ($, Sys) {
         function dnnEditBasicSettings() {
             $('#dnnEditBasicSettings').dnnPanels();
@@ -70,6 +59,5 @@
                 dnnEditBasicSettings();
             });
         });
-
-    }(jQuery, window.Sys));
+    })(jQuery, window.Sys);
 </script>

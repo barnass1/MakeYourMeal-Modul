@@ -1,0 +1,172 @@
+﻿@inherits DotNetNuke.Web.Mvc.Framework.DnnWebViewPage<BaBoMaZso.MakeYourMeal.Models.MealViewModel>
+@using System.Web.Mvc
+
+<form action="@Url.Action("Assemble", "Item")" method="post" class="make-your-meal-form">
+    @Html.AntiForgeryToken()
+
+    <div id="Items-@Dnn.ModuleContext.ModuleId" class="meal-wizard">
+
+        <!-- 1. Tészta -->
+        <div class="wizard-step" data-step="1">
+            <h3>1. Tészta (max 1 választható)</h3>
+            @if (Model != null && Model.Pastas != null)
+            {
+                foreach (var pasta in Model.Pastas)
+                {
+                    <label>
+                        <input type="radio" name="SelectedPasta" value="@pasta.Value" required /> @pasta.Text
+                    </label>
+                }
+            }
+            <div class="wizard-nav">
+                <button type="button" class="btn-prev" disabled>Vissza</button>
+                <button type="button" class="btn-next">Tovább</button>
+            </div>
+        </div>
+
+        <!-- 2. Szósz -->
+        <div class="wizard-step" data-step="2" style="display:none;">
+            <h3>2. Szósz (max 1 választható)</h3>
+            @if (Model != null && Model.Sauces != null)
+            {
+                foreach (var sauce in Model.Sauces)
+                {
+                    <label>
+                        <input type="radio" name="SelectedSauce" value="@sauce.Value" required /> @sauce.Text
+                    </label>
+                }
+            }
+            <div class="wizard-nav">
+                <button type="button" class="btn-prev">Vissza</button>
+                <button type="button" class="btn-next">Tovább</button>
+            </div>
+        </div>
+
+        <!-- 3. Feltét 1 -->
+        <div class="wizard-step" data-step="3" style="display:none;">
+            <h3>3. Feltét 1 (max 2 választható, második felár +500Ft)</h3>
+            @if (Model != null && Model.Toppings1 != null)
+            {
+                foreach (var top1 in Model.Toppings1)
+                {
+                    <label>
+                        <input type="checkbox" class="limit-top1" name="SelectedToppings1" value="@top1.Value" /> @top1.Text
+                    </label>
+                }
+            }
+            <div class="wizard-nav">
+                <button type="button" class="btn-prev">Vissza</button>
+                <button type="button" class="btn-next">Tovább</button>
+            </div>
+        </div>
+
+        <!-- 4. Feltét 2 -->
+        <div class="wizard-step" data-step="4" style="display:none;">
+            <h3>4. Feltét 2 (max 2 választható, második felár +200Ft)</h3>
+            @if (Model != null && Model.Toppings2 != null)
+            {
+                foreach (var top2 in Model.Toppings2)
+                {
+                    <label>
+                        <input type="checkbox" class="limit-top2" name="SelectedToppings2" value="@top2.Value" /> @top2.Text
+                    </label>
+                }
+            }
+            <div class="wizard-nav">
+                <button type="button" class="btn-prev">Vissza</button>
+                <button type="button" class="btn-next">Tovább</button>
+            </div>
+        </div>
+
+        <!-- 5. Extrák -->
+        <div class="wizard-step" data-step="5" style="display:none;">
+            <h3>5. Extrák (tetszőleges mennyiség)</h3>
+            @if (Model != null && Model.Extras != null)
+            {
+                foreach (var extra in Model.Extras)
+                {
+                    <label>
+                        <input type="checkbox" name="SelectedExtras" value="@extra.Value" /> @extra.Text
+                    </label>
+                }
+            }
+            <div class="wizard-nav">
+                <button type="button" class="btn-prev">Vissza</button>
+                <button type="button" class="btn-next">Tovább</button>
+            </div>
+        </div>
+
+
+        <!-- 6. Összegzés -->
+        <div class="wizard-step" data-step="6" style="display:none;">
+            <h3>6. Összegzés és kosárba helyezés</h3>
+            <div id="meal-summary"></div>
+            <div class="wizard-nav">
+                <button type="button" class="btn-prev">Vissza</button>
+                <button type="submit" class="dnnPrimaryAction">Kosárba helyezés</button>
+            </div>
+        </div>
+
+    </div>
+</form>
+
+<script type="text/javascript">
+    (function ($) {
+        var currentStep = 1;
+        var totalSteps = 6;
+
+        function showStep(n) {
+            $('.wizard-step').hide();
+            $('.wizard-step[data-step="' + n + '"]').show();
+        }
+
+        function updateSummary() {
+            var summary = [];
+            var pasta = $('input[name="SelectedPasta"]:checked').parent().text().trim();
+            if (pasta) summary.push('Tészta: ' + pasta);
+            var sauce = $('input[name="SelectedSauce"]:checked').parent().text().trim();
+            if (sauce) summary.push('Szósz: ' + sauce);
+            var top1 = $('input[name="SelectedToppings1"]:checked').map(function () {
+                return $(this).parent().text().trim();
+            }).get();
+            if (top1.length) summary.push('Feltét1: ' + top1.join(', '));
+            var top2 = $('input[name="SelectedToppings2"]:checked').map(function () {
+                return $(this).parent().text().trim();
+            }).get();
+            if (top2.length) summary.push('Feltét2: ' + top2.join(', '));
+            var extras = $('input[name="SelectedExtras"]:checked').map(function () {
+                return $(this).parent().text().trim();
+            }).get();
+            if (extras.length) summary.push('Extrák: ' + extras.join(', '));
+            $('#meal-summary').html(summary.join('<br/>'));
+        }
+
+        function limitCheckboxes(selector, max) {
+            $(document).on('change', selector, function () {
+                if ($(selector + ':checked').length > max) {
+                    this.checked = false;
+                    alert("Legfeljebb " + max + " választható.");
+                }
+            });
+        }
+
+        $(function () {
+            showStep(currentStep);
+            $('.btn-next').click(function () {
+                if (currentStep < totalSteps) {
+                    currentStep++;
+                    showStep(currentStep);
+                    if (currentStep === totalSteps) updateSummary();
+                }
+            });
+            $('.btn-prev').click(function () {
+                if (currentStep > 1) {
+                    currentStep--;
+                    showStep(currentStep);
+                }
+            });
+            limitCheckboxes('.limit-top1', 2);
+            limitCheckboxes('.limit-top2', 2);
+        });
+    })(jQuery);
+</script>

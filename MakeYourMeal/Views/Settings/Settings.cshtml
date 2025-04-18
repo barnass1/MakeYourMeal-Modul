@@ -1,20 +1,41 @@
-﻿@inherits DotNetNuke.Web.Mvc.Framework.DnnWebViewPage <BaBoMaZso.MakeYourMeal.Models.Settings>
-
+﻿@inherits DotNetNuke.Web.Mvc.Framework.DnnWebViewPage<BaBoMaZso.MakeYourMeal.Models.Settings>
 @using DotNetNuke.Web.Mvc.Helpers
 
-<h2 id="dnnSitePanel-BasicSettings" class="dnnFormSectionHead"><a href="" class="dnnSectionExpanded">@Dnn.LocalizeString("BasicSettings")</a></h2>
+<h2 id="dnnSitePanel-BasicSettings" class="dnnFormSectionHead">
+    <a href="" class="dnnSectionExpanded">@Dnn.LocalizeString("BasicSettings")</a>
+</h2>
 <fieldset>
     <div class="dnnFormItem">
-        <div class="dnnLabel" style="position: relative;">
-            @Html.LabelFor(m => Model.Setting1, new { @class = "col-md-2 control-label" })
-        </div>
-        @Html.CheckBoxFor(m => Model.Setting1)
+        <label for="Setting1">Engedélyezés:</label>
+        @Html.CheckBoxFor(m => m.Setting1)
     </div>
+
     <div class="dnnFormItem">
-        <div class="dnnLabel" style="position: relative;">
-            @Html.LabelFor(m => Model.Setting2, new { @class = "col-md-2 control-label" })
-        </div>
-        @Html.TextBoxFor(m => Model.Setting2)
+        <label for="Setting2">Érvényesség dátuma:</label>
+        @Html.TextBoxFor(m => m.Setting2, new { type = "date" })
+    </div>
+
+    <div class="dnnFormItem">
+        <label for="MaxExtras">Maximális extrák száma:</label>
+        @Html.TextBoxFor(m => m.MaxExtras)
+    </div>
+
+    <div class="dnnFormItem">
+        <label for="ExtraPriceMultiplier">Extrák árának szorzója:</label>
+        @Html.TextBoxFor(m => m.ExtraPriceMultiplier)
+    </div>
+
+    <div class="dnnFormItem">
+        <label for="EnabledCategorySlugs">Engedélyezett kategória slug-ok:</label>
+        @Html.TextBoxFor(m => m.EnabledCategorySlugs)
+    </div>
+
+    <div class="dnnFormItem">
+        <label for="NoticeText">Figyelmeztető üzenet:</label>
+        @Html.TextBoxFor(m => m.NoticeText)
+    </div>
+
+    <div class="dnnFormItem">
+        <button type="submit" class="dnnPrimaryAction">Mentés</button>
     </div>
 </fieldset>
-
