@@ -31,7 +31,7 @@ namespace BaBoMaZso.MakeYourMeal.Models
         ///<summary>
         /// The ID of your object with the name of the ItemName
         ///</summary>
-        public int ItemId { get; set; } = -1;
+        public int ItemId { get; set; }
         ///<summary>
         /// A string with the name of the ItemName
         ///</summary>
@@ -55,29 +55,29 @@ namespace BaBoMaZso.MakeYourMeal.Models
         ///<summary>
         /// An integer for the user id of the user who created the object
         ///</summary>
-        public int CreatedByUserId { get; set; } = -1;
+        public int CreatedByUserId { get; set; }
 
         ///<summary>
         /// An integer for the user id of the user who last updated the object
         ///</summary>
-        public int LastModifiedByUserId { get; set; } = -1;
+        public int LastModifiedByUserId { get; set; }
 
         ///<summary>
         /// The date the object was created
         ///</summary>
-        public DateTime CreatedOnDate { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedOnDate { get; set; }
 
         ///<summary>
         /// The date the object was updated
         ///</summary>
-        public DateTime LastModifiedOnDate { get; set; } = DateTime.UtcNow;
+        public DateTime LastModifiedOnDate { get; set; }
 
         public class ItemDetails
         {
             public string SelectedPasta { get; set; }
             public string SelectedSauce { get; set; }
-            public List<string> SelectedToppings { get; set; } = new List<string>();
-            public List<string> SelectedExtras { get; set; } = new List<string>();
+            public List<string> SelectedToppings { get; set; }
+            public List<string> SelectedExtras { get; set; }
         }
 
     }

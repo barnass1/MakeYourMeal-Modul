@@ -7,10 +7,10 @@
 ' THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
 ' CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 ' DEALINGS IN THE SOFTWARE.
-' 
 */
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Web.Mvc;
 using BaBoMaZso.MakeYourMeal.Components;
@@ -19,12 +19,35 @@ using DotNetNuke.Entities.Users;
 using DotNetNuke.Framework.JavaScriptLibraries;
 using DotNetNuke.Web.Mvc.Framework.ActionFilters;
 using DotNetNuke.Web.Mvc.Framework.Controllers;
+using Hotcakes.Commerce;                
+using Hotcakes.Commerce.Catalog;    
 
 namespace BaBoMaZso.MakeYourMeal.Controllers
 {
     [DnnHandleError]
     public class ItemController : DnnController
     {
+        private readonly HotcakesApplication HccApp = HotcakesApplication.Current; 
+        private List<SelectListItem> GetToppingsFromHotcakes()
+        {
+            string toppingsCategoryId = "ac43dc33-306b-4fed-b905-afa01c66ac0d";
+
+            var criteria = new ProductSearchCriteria
+            {
+                CategoryId = toppingsCategoryId
+            };
+
+            int totalCount = 0;
+            var toppings = HccApp.CatalogServices.Products.FindByCriteria(criteria, 1, int.MaxValue, ref totalCount);
+
+            var selectList = toppings.Select(p => new SelectListItem
+            {
+                Text = p.ProductName,
+                Value = p.Bvin
+            }).ToList();
+
+            return selectList;
+        }
 
         public ActionResult Delete(int itemId)
         {
@@ -35,13 +58,11 @@ namespace BaBoMaZso.MakeYourMeal.Controllers
         public ActionResult Edit(int itemId = -1)
         {
             DotNetNuke.Framework.JavaScriptLibraries.JavaScript.RequestRegistration(CommonJs.DnnPlugins);
-
             var userlist = UserController.GetUsers(PortalSettings.PortalId);
             var users = from user in userlist.Cast<UserInfo>().ToList()
                         select new SelectListItem { Text = user.DisplayName, Value = user.UserID.ToString() };
-
             ViewBag.Users = users;
-
+            ViewBag.Toppings = GetToppingsFromHotcakes();
             var item = (itemId == -1)
                  ? new Item { ModuleId = ModuleContext.ModuleId }
                  : ItemManager.Instance.GetItem(itemId, ModuleContext.ModuleId);
@@ -99,7 +120,7 @@ namespace BaBoMaZso.MakeYourMeal.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return View(item); // újra megjelenítjük a hibákkal
+                return View(item);
             }
 
             item.ModuleId = ModuleContext.ModuleId;
@@ -109,8 +130,6 @@ namespace BaBoMaZso.MakeYourMeal.Controllers
             item.LastModifiedOnDate = DateTime.UtcNow;
 
             ItemManager.Instance.CreateItem(item);
-
-            // Vissza a kezdőoldalra, vagy visszajelzés oldalra
             return RedirectToDefaultRoute();
         }
     }
