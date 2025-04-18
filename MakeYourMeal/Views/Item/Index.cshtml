@@ -1,33 +1,8 @@
-﻿@inherits DotNetNuke.Web.Mvc.Framework.DnnWebViewPage<IEnumerable< BaBoMaZso.MakeYourMeal.Models.Item >>
+﻿@inherits DotNetNuke.Web.Mvc.Framework.DnnWebViewPage
+@using System.Web.Mvc
 
-@using System.Text.RegularExpressions
-@using DotNetNuke.Web.Mvc.Helpers
-
-
-<div id="Items-@Dnn.ModuleContext.ModuleId">
-    @if (Model.Count() == 0)
-    {
-        <p>@Dnn.LocalizeString("NoItems")</p>
-    }
-    else
-    {
-        <ul class="tm_tl">
-            @foreach (var item in Model)
-            {
-                <li class="tm_t">
-                    <h3>@item.ItemName</h3>
-                    <div class="tm_td">@item.ItemDescription</div>
-                    @{
-                        if (Dnn.ModuleContext.IsEditable)
-                        {
-                            <div>
-                                <a href="@Url.Action("Edit", "Item", new {ctl = "Edit", itemId = item.ItemId})">@Dnn.LocalizeString("EditItem")</a>
-                                <a href="@Url.Action("Delete", "Item", new {itemId = item.ItemId})">@Dnn.LocalizeString("DeleteItem")</a>
-                            </div>
-                        }
-                    }
-                </li>
-            }
-        </ul>
-    }
+<div class="meal-promo" style="margin-bottom: 1.5em; padding: 1em; background-color: #f9f9f9; border-left: 4px solid #ff6600;">
+    <h2>Állítsd össze saját tésztádat!</h2>
+    <p>Válassz tésztát, szószt, feltéteket és extrákat, hogy elkészítsd a személyre szabott ebédedet!</p>
+    <a class="dnnPrimaryAction" href="@Url.Action("Assemble", "Item")">Új rendelés leadása</a>
 </div>
