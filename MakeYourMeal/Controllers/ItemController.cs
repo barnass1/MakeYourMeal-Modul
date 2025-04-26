@@ -8,7 +8,7 @@ using DotNetNuke.Web.Mvc.Framework.Controllers;
 using Hotcakes.Commerce;
 using Hotcakes.Commerce.Catalog;
 using Hotcakes.Commerce.Orders;
-using DotNetNuke.Common; // Ezt hozzáadtam a NavigateURL miatt
+using DotNetNuke.Common;
 
 namespace BaBoMaZso.MakeYourMeal.Controllers
 {
@@ -16,8 +16,6 @@ namespace BaBoMaZso.MakeYourMeal.Controllers
     public class ItemController : DnnController
     {
         private readonly HotcakesApplication _hcc = HotcakesApplication.Current;
-
-        // --- ADMIN: Admin oldal megjelenítése ---
         [HttpGet]
         public ActionResult Admin()
         {
@@ -68,14 +66,10 @@ namespace BaBoMaZso.MakeYourMeal.Controllers
             TempData["Error"] = "Hiba a termék mentése közben.";
             return Redirect(DotNetNuke.Common.Globals.NavigateURL(this.ModuleContext.TabId, "Admin", "mid=" + this.ModuleContext.ModuleId));
         }
-
-        // --- VÁSÁRLÓ: Főoldal ---
         public ActionResult Index()
         {
             return View("Index");
         }
-
-        // --- VÁSÁRLÓ: Összeállítás oldal ---
         [HttpGet]
         public ActionResult Assemble()
         {
@@ -141,8 +135,6 @@ namespace BaBoMaZso.MakeYourMeal.Controllers
 
             return Redirect("/DesktopModules/Hotcakes/Core/Admin/Cart/ViewCart.aspx");
         }
-
-        // --- SEGÉDFÜGGVÉNYEK ---
 
         private List<SelectListItem> LoadOptionsByCategory(List<SelectedProductViewModel> selectedProducts, string categorySlug)
         {

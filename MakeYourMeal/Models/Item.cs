@@ -19,8 +19,6 @@
         public int LastModifiedByUserId { get; set; }
         public DateTime CreatedOnDate { get; set; }
         public DateTime LastModifiedOnDate { get; set; }
-
-        // Új mezők a felhasználói választások tárolásához
         public string SelectedPasta { get; set; }
         public string SelectedSauce { get; set; }
         public string SelectedToppings1 { get; set; }
