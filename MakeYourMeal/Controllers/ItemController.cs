@@ -8,7 +8,6 @@ using DotNetNuke.Web.Mvc.Framework.Controllers;
 using Hotcakes.Commerce;
 using Hotcakes.Commerce.Catalog;
 using Hotcakes.Commerce.Orders;
-using DotNetNuke.Common;
 
 namespace BaBoMaZso.MakeYourMeal.Controllers
 {
@@ -16,72 +15,22 @@ namespace BaBoMaZso.MakeYourMeal.Controllers
     public class ItemController : DnnController
     {
         private readonly HotcakesApplication _hcc = HotcakesApplication.Current;
-        [HttpGet]
-        public ActionResult Admin()
-        {
-            var criteria = new ProductSearchCriteria
-            {
-                Keyword = "",
-                DisplayInactiveProducts = true
-            };
 
-            int totalCount = 0;
-            var products = _hcc.CatalogServices.Products.FindByCriteria(criteria, 1, 1000, ref totalCount);
-
-            ViewBag.HotcakesProducts = products.Select(p => new SelectListItem
-            {
-                Text = p.ProductName,
-                Value = p.Bvin
-            }).ToList();
-
-            var model = new ProductAdminViewModel();
-
-            return View("Admin", model);
-        }
-
-        [HttpPost]
-        [DotNetNuke.Web.Mvc.Framework.ActionFilters.ValidateAntiForgeryToken]
-        public ActionResult SaveProduct(ProductAdminViewModel model)
-        {
-            if (ModelState.IsValid)
-            {
-                var selected = (List<SelectedProductViewModel>)Session["SelectedProducts"];
-                if (selected == null)
-                {
-                    selected = new List<SelectedProductViewModel>();
-                }
-
-                selected.Add(new SelectedProductViewModel
-                {
-                    Bvin = model.SelectedProductBvin,
-                    CategorySlug = model.CategorySlug
-                });
-
-                Session["SelectedProducts"] = selected;
-
-                TempData["Success"] = "Termék sikeresen hozzárendelve!";
-                return Redirect(DotNetNuke.Common.Globals.NavigateURL(this.ModuleContext.TabId, "Admin", "mid=" + this.ModuleContext.ModuleId));
-            }
-
-            TempData["Error"] = "Hiba a termék mentése közben.";
-            return Redirect(DotNetNuke.Common.Globals.NavigateURL(this.ModuleContext.TabId, "Admin", "mid=" + this.ModuleContext.ModuleId));
-        }
         public ActionResult Index()
         {
             return View("Index");
         }
+
         [HttpGet]
         public ActionResult Assemble()
         {
-            var selectedProducts = (List<SelectedProductViewModel>)Session["SelectedProducts"] ?? new List<SelectedProductViewModel>();
-
             var model = new MealViewModel
             {
-                Pastas = LoadOptionsByCategory(selectedProducts, "pastas"),
-                Sauces = LoadOptionsByCategory(selectedProducts, "sauces"),
-                Toppings1 = LoadOptionsByCategory(selectedProducts, "toppings1"),
-                Toppings2 = LoadOptionsByCategory(selectedProducts, "toppings2"),
-                Extras = LoadOptionsByCategory(selectedProducts, "extras")
+                Pastas = LoadOptions("pastas"),
+                Sauces = LoadOptions("sauces"),
+                Toppings1 = LoadOptions("toppings1"),
+                Toppings2 = LoadOptions("toppings2"),
+                Extras = LoadOptions("extras")
             };
 
             return View("Assemble", model);
@@ -96,77 +45,65 @@ namespace BaBoMaZso.MakeYourMeal.Controllers
                 return RedirectToAction("Assemble");
             }
 
-            var baseSku = "custom-meal";
-            var product = _hcc.CatalogServices.Products.FindBySlug(baseSku);
-            if (product == null)
-            {
-                TempData["Error"] = "A 'custom-meal' nevű alap termék nem található.";
-                return RedirectToDefaultRoute();
-            }
-
-            decimal extraCost = 0m;
-            if (model.SelectedToppings1 != null && model.SelectedToppings1.Count > 1)
-                extraCost += 500m;
-            if (model.SelectedToppings2 != null && model.SelectedToppings2.Count > 1)
-                extraCost += 200m;
-
-            var finalPrice = product.SitePrice + extraCost;
-
-            var description = $"Tészta: {GetProductName(model.SelectedPasta)}\n" +
-                              $"Szósz: {GetProductName(model.SelectedSauce)}\n" +
-                              $"Feltét1: {GetProductNames(model.SelectedToppings1)}\n" +
-                              $"Feltét2: {GetProductNames(model.SelectedToppings2)}\n" +
-                              $"Extrák: {GetProductNames(model.SelectedExtras)}";
-
             var cart = _hcc.OrderServices.EnsureShoppingCart();
-            cart.Items.Add(new LineItem
-            {
-                ProductId = product.Bvin,
-                ProductName = "Saját étel összeállítás",
-                Quantity = 1,
-                BasePricePerItem = finalPrice,
-                LineTotal = finalPrice,
-                ProductShortDescription = description,
-                ShippingPortion = 0,
-                TaxPortion = 0
-            });
+
+            AddToCart(model.SelectedPasta, cart);
+            AddToCart(model.SelectedSauce, cart);
+
+            AddMultipleToCart(model.SelectedToppings1, cart);
+            AddMultipleToCart(model.SelectedToppings2, cart);
+            AddMultipleToCart(model.SelectedExtras, cart);
 
             _hcc.OrderServices.Orders.Upsert(cart);
 
-            return Redirect("/DesktopModules/Hotcakes/Core/Admin/Cart/ViewCart.aspx");
+            return Redirect("/HotcakesStore/Cart");
         }
 
-        private List<SelectListItem> LoadOptionsByCategory(List<SelectedProductViewModel> selectedProducts, string categorySlug)
+        private List<ProductOptionViewModel> LoadOptions(string categorySlug)
         {
-            return selectedProducts
-                .Where(p => p.CategorySlug == categorySlug)
-                .Select(p =>
-                {
-                    var product = _hcc.CatalogServices.Products.Find(p.Bvin);
-                    return new SelectListItem
-                    {
-                        Text = product?.ProductName ?? "Ismeretlen termék",
-                        Value = p.Bvin
-                    };
-                })
-                .ToList();
+            var category = _hcc.CatalogServices.Categories.FindBySlug(categorySlug);
+            if (category == null) return new List<ProductOptionViewModel>();
+
+            int total = 0;
+            var products = _hcc.CatalogServices.Products.FindByCriteria(new ProductSearchCriteria
+            {
+                CategoryId = category.Bvin,
+                DisplayInactiveProducts = true
+            }, 1, int.MaxValue, ref total);
+
+            return products.Select(p => new ProductOptionViewModel
+            {
+                Name = p.ProductName,
+                Value = p.Bvin,
+                ImageUrl = p.ImageFileSmall
+            }).ToList();
         }
 
-        private string GetProductName(string bvin)
+        private void AddToCart(string bvin, Order cart)
         {
-            if (string.IsNullOrEmpty(bvin))
-                return "Nincs kiválasztva";
+            if (string.IsNullOrWhiteSpace(bvin)) return;
 
             var product = _hcc.CatalogServices.Products.Find(bvin);
-            return product?.ProductName ?? "Ismeretlen termék";
+            if (product == null) return;
+
+            cart.Items.Add(new LineItem
+            {
+                ProductId = product.Bvin,
+                ProductName = product.ProductName,
+                Quantity = 1,
+                BasePricePerItem = product.SitePrice,
+                LineTotal = product.SitePrice,
+                ProductShortDescription = product.ShortDescription
+            });
         }
 
-        private string GetProductNames(IList<string> bvins)
+        private void AddMultipleToCart(IEnumerable<string> bvins, Order cart)
         {
-            if (bvins == null || !bvins.Any())
-                return "Nincs kiválasztva";
-
-            return string.Join(", ", bvins.Select(GetProductName));
+            if (bvins == null) return;
+            foreach (var bvin in bvins)
+            {
+                AddToCart(bvin, cart);
+            }
         }
     }
 }

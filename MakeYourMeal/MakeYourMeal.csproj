@@ -125,8 +125,7 @@
     <Compile Include="Models\Item.cs" />
     <Compile Include="Controllers\ItemController.cs" />
     <Compile Include="Models\MealViewModel.cs" />
-    <Compile Include="Models\ProductAdminViewModel.cs" />
-    <Compile Include="Models\SelectedProductViewModel.cs" />
+    <Compile Include="Models\ProductOptionViewModel.cs" />
     <Compile Include="Models\Settings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -153,7 +152,7 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Providers\DataProviders\SqlDataProvider\00.03.00.SqlDataProvider" />
+    <Content Include="Providers\DataProviders\SqlDataProvider\00.03.01.SqlDataProvider" />
     <Content Include="Providers\DataProviders\SqlDataProvider\Uninstall.SqlDataProvider" />
   </ItemGroup>
   <ItemGroup>
@@ -172,7 +171,6 @@
     <Content Include="Views\Item\Edit.cshtml" />
     <Content Include="Views\Settings\Settings.cshtml" />
     <Content Include="Views\Item\Assemble.cshtml" />
-    <Content Include="Views\Item\Admin.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
