@@ -1,20 +1,14 @@
-﻿/*
-' Copyright (c) 2025 Wok and Roll
-' All rights reserved.
-*/
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web.Mvc;
 using BaBoMaZso.MakeYourMeal.Models;
-using DotNetNuke.Entities.Users;
-using DotNetNuke.Framework.JavaScriptLibraries;
 using DotNetNuke.Web.Mvc.Framework.ActionFilters;
 using DotNetNuke.Web.Mvc.Framework.Controllers;
 using Hotcakes.Commerce;
 using Hotcakes.Commerce.Catalog;
 using Hotcakes.Commerce.Orders;
+using DotNetNuke.Common; // Ezt hozzáadtam a NavigateURL miatt
 
 namespace BaBoMaZso.MakeYourMeal.Controllers
 {
@@ -23,97 +17,115 @@ namespace BaBoMaZso.MakeYourMeal.Controllers
     {
         private readonly HotcakesApplication _hcc = HotcakesApplication.Current;
 
-        // Segéd: lekérhető terméklista egy adott kategória slug alapján
-        private IEnumerable<SelectListItem> GetOptionsByCategorySlug(string slug)
+        // --- ADMIN: Admin oldal megjelenítése ---
+        [HttpGet]
+        public ActionResult Admin()
         {
-            var category = _hcc.CatalogServices.Categories.FindBySlug(slug);
-            if (category == null) return Enumerable.Empty<SelectListItem>();
+            var criteria = new ProductSearchCriteria
+            {
+                Keyword = "",
+                DisplayInactiveProducts = true
+            };
 
-            var criteria = new ProductSearchCriteria { CategoryId = category.Bvin };
             int totalCount = 0;
-            var products = _hcc.CatalogServices.Products.FindByCriteria(criteria, 1, 100, ref totalCount);
+            var products = _hcc.CatalogServices.Products.FindByCriteria(criteria, 1, 1000, ref totalCount);
 
-            return products.Select(p => new SelectListItem
+            ViewBag.HotcakesProducts = products.Select(p => new SelectListItem
             {
                 Text = p.ProductName,
                 Value = p.Bvin
-            });
+            }).ToList();
+
+            var model = new ProductAdminViewModel();
+
+            return View("Admin", model);
         }
 
-        // ─────────────────────────────────────────────
-        // Nyitó nézet (csak új rendelés gomb, üres lista)
-        // ─────────────────────────────────────────────
-        [ModuleAction(ControlKey = "AddItem", TitleKey = "AddItem")]
+        [HttpPost]
+        [DotNetNuke.Web.Mvc.Framework.ActionFilters.ValidateAntiForgeryToken]
+        public ActionResult SaveProduct(ProductAdminViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var selected = (List<SelectedProductViewModel>)Session["SelectedProducts"];
+                if (selected == null)
+                {
+                    selected = new List<SelectedProductViewModel>();
+                }
+
+                selected.Add(new SelectedProductViewModel
+                {
+                    Bvin = model.SelectedProductBvin,
+                    CategorySlug = model.CategorySlug
+                });
+
+                Session["SelectedProducts"] = selected;
+
+                TempData["Success"] = "Termék sikeresen hozzárendelve!";
+                return Redirect(DotNetNuke.Common.Globals.NavigateURL(this.ModuleContext.TabId, "Admin", "mid=" + this.ModuleContext.ModuleId));
+            }
+
+            TempData["Error"] = "Hiba a termék mentése közben.";
+            return Redirect(DotNetNuke.Common.Globals.NavigateURL(this.ModuleContext.TabId, "Admin", "mid=" + this.ModuleContext.ModuleId));
+        }
+
+        // --- VÁSÁRLÓ: Főoldal ---
         public ActionResult Index()
         {
-            var items = new List<Item>(); // nem használunk adatbázist most
-            return View("Index", items);
+            return View("Index");
         }
 
-        // ─────────────────────────────────────────────
-        // Összerakó nézet (GET)
-        // ─────────────────────────────────────────────
+        // --- VÁSÁRLÓ: Összeállítás oldal ---
+        [HttpGet]
         public ActionResult Assemble()
         {
+            var selectedProducts = (List<SelectedProductViewModel>)Session["SelectedProducts"] ?? new List<SelectedProductViewModel>();
+
             var model = new MealViewModel
             {
-                ModuleId = ModuleContext.ModuleId,
-                Pastas = GetOptionsByCategorySlug("pastas"),
-                Sauces = GetOptionsByCategorySlug("sauces"),
-                Toppings1 = GetOptionsByCategorySlug("toppings1"),
-                Toppings2 = GetOptionsByCategorySlug("toppings2"),
-                Extras = GetOptionsByCategorySlug("extras")
+                Pastas = LoadOptionsByCategory(selectedProducts, "pastas"),
+                Sauces = LoadOptionsByCategory(selectedProducts, "sauces"),
+                Toppings1 = LoadOptionsByCategory(selectedProducts, "toppings1"),
+                Toppings2 = LoadOptionsByCategory(selectedProducts, "toppings2"),
+                Extras = LoadOptionsByCategory(selectedProducts, "extras")
             };
 
             return View("Assemble", model);
         }
 
-        // ─────────────────────────────────────────────
-        // Összerakó (POST) – Kosárba tesz
-        // ─────────────────────────────────────────────
         [HttpPost]
         [DotNetNuke.Web.Mvc.Framework.ActionFilters.ValidateAntiForgeryToken]
         public ActionResult Assemble(MealViewModel model)
         {
             if (!ModelState.IsValid)
             {
-                model.Pastas = GetOptionsByCategorySlug("pastas");
-                model.Sauces = GetOptionsByCategorySlug("sauces");
-                model.Toppings1 = GetOptionsByCategorySlug("toppings1");
-                model.Toppings2 = GetOptionsByCategorySlug("toppings2");
-                model.Extras = GetOptionsByCategorySlug("extras");
-                return View("Assemble", model);
+                return RedirectToAction("Assemble");
             }
 
-            // Leírás összeállítása
-            var description = $"Tészta: {model.SelectedPasta}, Szósz: {model.SelectedSauce}\n" +
-                              $"F1: {string.Join(", ", model.SelectedToppings1)}\n" +
-                              $"F2: {string.Join(", ", model.SelectedToppings2)}\n" +
-                              $"Extrák: {string.Join(", ", model.SelectedExtras)}";
-
-            // Alaptermék betöltése slug alapján
             var baseSku = "custom-meal";
             var product = _hcc.CatalogServices.Products.FindBySlug(baseSku);
             if (product == null)
             {
-                TempData["Error"] = "A 'custom-meal' nevű termék nem található. Kérjük, hozd létre a Hotcakes adminban.";
+                TempData["Error"] = "A 'custom-meal' nevű alap termék nem található.";
                 return RedirectToDefaultRoute();
             }
 
-            // Extra árak számítása
             decimal extraCost = 0m;
             if (model.SelectedToppings1 != null && model.SelectedToppings1.Count > 1)
                 extraCost += 500m;
             if (model.SelectedToppings2 != null && model.SelectedToppings2.Count > 1)
                 extraCost += 200m;
 
-            var basePrice = product.SitePrice;
-            var finalPrice = basePrice + extraCost;
+            var finalPrice = product.SitePrice + extraCost;
 
-            // Kosárba helyezés
+            var description = $"Tészta: {GetProductName(model.SelectedPasta)}\n" +
+                              $"Szósz: {GetProductName(model.SelectedSauce)}\n" +
+                              $"Feltét1: {GetProductNames(model.SelectedToppings1)}\n" +
+                              $"Feltét2: {GetProductNames(model.SelectedToppings2)}\n" +
+                              $"Extrák: {GetProductNames(model.SelectedExtras)}";
+
             var cart = _hcc.OrderServices.EnsureShoppingCart();
-
-            var lineItem = new LineItem
+            cart.Items.Add(new LineItem
             {
                 ProductId = product.Bvin,
                 ProductName = "Saját étel összeállítás",
@@ -123,13 +135,46 @@ namespace BaBoMaZso.MakeYourMeal.Controllers
                 ProductShortDescription = description,
                 ShippingPortion = 0,
                 TaxPortion = 0
-            };
+            });
 
-            cart.Items.Add(lineItem);
             _hcc.OrderServices.Orders.Upsert(cart);
 
-            // Kosár oldalra irányítás
             return Redirect("/DesktopModules/Hotcakes/Core/Admin/Cart/ViewCart.aspx");
+        }
+
+        // --- SEGÉDFÜGGVÉNYEK ---
+
+        private List<SelectListItem> LoadOptionsByCategory(List<SelectedProductViewModel> selectedProducts, string categorySlug)
+        {
+            return selectedProducts
+                .Where(p => p.CategorySlug == categorySlug)
+                .Select(p =>
+                {
+                    var product = _hcc.CatalogServices.Products.Find(p.Bvin);
+                    return new SelectListItem
+                    {
+                        Text = product?.ProductName ?? "Ismeretlen termék",
+                        Value = p.Bvin
+                    };
+                })
+                .ToList();
+        }
+
+        private string GetProductName(string bvin)
+        {
+            if (string.IsNullOrEmpty(bvin))
+                return "Nincs kiválasztva";
+
+            var product = _hcc.CatalogServices.Products.Find(bvin);
+            return product?.ProductName ?? "Ismeretlen termék";
+        }
+
+        private string GetProductNames(IList<string> bvins)
+        {
+            if (bvins == null || !bvins.Any())
+                return "Nincs kiválasztva";
+
+            return string.Join(", ", bvins.Select(GetProductName));
         }
     }
 }

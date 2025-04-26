@@ -1,7 +1,9 @@
 ﻿@inherits DotNetNuke.Web.Mvc.Framework.DnnWebViewPage<BaBoMaZso.MakeYourMeal.Models.MealViewModel>
-@using System.Web.Mvc
+@using System.Linq
+@using System.Collections.Generic
+@using SelectListItem = System.Web.Mvc.SelectListItem
 
-<form action="@Url.Action("Assemble", "Item")" method="post" class="make-your-meal-form">
+<form action="@Url.Action("Assemble", "Item")" method="post" class="make-your-meal-form" id="mealForm">
     @Html.AntiForgeryToken()
 
     <div id="Items-@Dnn.ModuleContext.ModuleId" class="meal-wizard">
@@ -9,101 +11,130 @@
         <!-- 1. Tészta -->
         <div class="wizard-step" data-step="1">
             <h3>1. Tészta (max 1 választható)</h3>
-            @if (Model != null && Model.Pastas != null)
+            @{
+                var pastas = Model != null && Model.Pastas != null ? Model.Pastas : Enumerable.Empty<SelectListItem>();
+            }
+            @if (pastas.Count() > 0)
             {
-                foreach (var pasta in Model.Pastas)
+                foreach (var item in pastas)
                 {
-                    <label>
-                        <input type="radio" name="SelectedPasta" value="@pasta.Value" required /> @pasta.Text
-                    </label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" id="pasta_@item.Value" name="SelectedPasta"
+                               value="@item.Value" required @(item.Selected ? "checked" : "") />
+                        <label class="form-check-label" for="pasta_@item.Value">@item.Text</label>
+                    </div>
                 }
             }
-            <div class="wizard-nav">
-                <button type="button" class="btn-prev" disabled>Vissza</button>
-                <button type="button" class="btn-next">Tovább</button>
+            else
+            {
+                <div class="alert alert-warning">Nincsenek elérhető tészták.</div>
+            }
+            <div class="wizard-nav mt-3">
+                <button type="button" class="btn btn-secondary btn-prev" disabled>Vissza</button>
+                <button type="button" class="btn btn-primary btn-next">Tovább</button>
             </div>
         </div>
 
         <!-- 2. Szósz -->
         <div class="wizard-step" data-step="2" style="display:none;">
             <h3>2. Szósz (max 1 választható)</h3>
-            @if (Model != null && Model.Sauces != null)
+            @{
+                var sauces = Model != null && Model.Sauces != null ? Model.Sauces : Enumerable.Empty<SelectListItem>();
+            }
+            @if (sauces.Count() > 0)
             {
-                foreach (var sauce in Model.Sauces)
+                foreach (var item in sauces)
                 {
-                    <label>
-                        <input type="radio" name="SelectedSauce" value="@sauce.Value" required /> @sauce.Text
-                    </label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" id="sauce_@item.Value" name="SelectedSauce"
+                               value="@item.Value" required @(item.Selected ? "checked" : "") />
+                        <label class="form-check-label" for="sauce_@item.Value">@item.Text</label>
+                    </div>
                 }
             }
-            <div class="wizard-nav">
-                <button type="button" class="btn-prev">Vissza</button>
-                <button type="button" class="btn-next">Tovább</button>
+            else
+            {
+                <div class="alert alert-warning">Nincsenek elérhető szószok.</div>
+            }
+            <div class="wizard-nav mt-3">
+                <button type="button" class="btn btn-secondary btn-prev">Vissza</button>
+                <button type="button" class="btn btn-primary btn-next">Tovább</button>
             </div>
         </div>
 
         <!-- 3. Feltét 1 -->
         <div class="wizard-step" data-step="3" style="display:none;">
-            <h3>3. Feltét 1 (max 2 választható, második felár +500Ft)</h3>
-            @if (Model != null && Model.Toppings1 != null)
+            <h3>3. Feltét 1 (max 2 választható)</h3>
+            @{
+                var toppings1 = Model != null && Model.Toppings1 != null ? Model.Toppings1 : Enumerable.Empty<SelectListItem>();
+            }
+            @if (toppings1.Count() > 0)
             {
-                foreach (var top1 in Model.Toppings1)
+                foreach (var item in toppings1)
                 {
-                    <label>
-                        <input type="checkbox" class="limit-top1" name="SelectedToppings1" value="@top1.Value" /> @top1.Text
-                    </label>
+                    <div class="form-check">
+                        <input class="form-check-input limit-top1" type="checkbox" name="SelectedToppings1" value="@item.Value" />
+                        <label class="form-check-label">@item.Text</label>
+                    </div>
                 }
             }
-            <div class="wizard-nav">
-                <button type="button" class="btn-prev">Vissza</button>
-                <button type="button" class="btn-next">Tovább</button>
+            <div class="wizard-nav mt-3">
+                <button type="button" class="btn btn-secondary btn-prev">Vissza</button>
+                <button type="button" class="btn btn-primary btn-next">Tovább</button>
             </div>
         </div>
 
         <!-- 4. Feltét 2 -->
         <div class="wizard-step" data-step="4" style="display:none;">
-            <h3>4. Feltét 2 (max 2 választható, második felár +200Ft)</h3>
-            @if (Model != null && Model.Toppings2 != null)
+            <h3>4. Feltét 2 (max 2 választható)</h3>
+            @{
+                var toppings2 = Model != null && Model.Toppings2 != null ? Model.Toppings2 : Enumerable.Empty<SelectListItem>();
+            }
+            @if (toppings2.Count() > 0)
             {
-                foreach (var top2 in Model.Toppings2)
+                foreach (var item in toppings2)
                 {
-                    <label>
-                        <input type="checkbox" class="limit-top2" name="SelectedToppings2" value="@top2.Value" /> @top2.Text
-                    </label>
+                    <div class="form-check">
+                        <input class="form-check-input limit-top2" type="checkbox" name="SelectedToppings2" value="@item.Value" />
+                        <label class="form-check-label">@item.Text</label>
+                    </div>
                 }
             }
-            <div class="wizard-nav">
-                <button type="button" class="btn-prev">Vissza</button>
-                <button type="button" class="btn-next">Tovább</button>
+            <div class="wizard-nav mt-3">
+                <button type="button" class="btn btn-secondary btn-prev">Vissza</button>
+                <button type="button" class="btn btn-primary btn-next">Tovább</button>
             </div>
         </div>
 
         <!-- 5. Extrák -->
         <div class="wizard-step" data-step="5" style="display:none;">
-            <h3>5. Extrák (tetszőleges mennyiség)</h3>
-            @if (Model != null && Model.Extras != null)
+            <h3>5. Extrák</h3>
+            @{
+                var extras = Model != null && Model.Extras != null ? Model.Extras : Enumerable.Empty<SelectListItem>();
+            }
+            @if (extras.Count() > 0)
             {
-                foreach (var extra in Model.Extras)
+                foreach (var item in extras)
                 {
-                    <label>
-                        <input type="checkbox" name="SelectedExtras" value="@extra.Value" /> @extra.Text
-                    </label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="SelectedExtras" value="@item.Value" />
+                        <label class="form-check-label">@item.Text</label>
+                    </div>
                 }
             }
-            <div class="wizard-nav">
-                <button type="button" class="btn-prev">Vissza</button>
-                <button type="button" class="btn-next">Tovább</button>
+            <div class="wizard-nav mt-3">
+                <button type="button" class="btn btn-secondary btn-prev">Vissza</button>
+                <button type="button" class="btn btn-primary btn-next">Tovább</button>
             </div>
         </div>
-
 
         <!-- 6. Összegzés -->
         <div class="wizard-step" data-step="6" style="display:none;">
             <h3>6. Összegzés és kosárba helyezés</h3>
             <div id="meal-summary"></div>
-            <div class="wizard-nav">
-                <button type="button" class="btn-prev">Vissza</button>
-                <button type="submit" class="dnnPrimaryAction">Kosárba helyezés</button>
+            <div class="wizard-nav mt-3">
+                <button type="button" class="btn btn-secondary btn-prev">Vissza</button>
+                <button type="submit" class="btn btn-success">Kosárba helyezés</button>
             </div>
         </div>
 
@@ -115,9 +146,9 @@
         var currentStep = 1;
         var totalSteps = 6;
 
-        function showStep(n) {
-            $('.wizard-step').hide();
-            $('.wizard-step[data-step="' + n + '"]').show();
+        function showStep(step) {
+            $('.wizard-step').hide().removeClass('active');
+            $('.wizard-step[data-step="' + step + '"]').show().addClass('active');
         }
 
         function updateSummary() {
@@ -145,26 +176,25 @@
             $(document).on('change', selector, function () {
                 if ($(selector + ':checked').length > max) {
                     this.checked = false;
-                    alert("Legfeljebb " + max + " választható.");
+                    alert('Maximum ' + max + ' lehetőséget választhatsz!');
                 }
             });
         }
 
-        $(function () {
+        $(document).ready(function () {
             showStep(currentStep);
+
             $('.btn-next').click(function () {
-                if (currentStep < totalSteps) {
-                    currentStep++;
-                    showStep(currentStep);
-                    if (currentStep === totalSteps) updateSummary();
-                }
+                currentStep = Math.min(currentStep + 1, totalSteps);
+                showStep(currentStep);
+                if (currentStep === totalSteps) updateSummary();
             });
+
             $('.btn-prev').click(function () {
-                if (currentStep > 1) {
-                    currentStep--;
-                    showStep(currentStep);
-                }
+                currentStep = Math.max(currentStep - 1, 1);
+                showStep(currentStep);
             });
+
             limitCheckboxes('.limit-top1', 2);
             limitCheckboxes('.limit-top2', 2);
         });

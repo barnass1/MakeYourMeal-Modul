@@ -125,6 +125,8 @@
     <Compile Include="Models\Item.cs" />
     <Compile Include="Controllers\ItemController.cs" />
     <Compile Include="Models\MealViewModel.cs" />
+    <Compile Include="Models\ProductAdminViewModel.cs" />
+    <Compile Include="Models\SelectedProductViewModel.cs" />
     <Compile Include="Models\Settings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -170,6 +172,7 @@
     <Content Include="Views\Item\Edit.cshtml" />
     <Content Include="Views\Settings\Settings.cshtml" />
     <Content Include="Views\Item\Assemble.cshtml" />
+    <Content Include="Views\Item\Admin.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
