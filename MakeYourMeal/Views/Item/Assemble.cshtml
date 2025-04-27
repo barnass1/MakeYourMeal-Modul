@@ -1,34 +1,41 @@
 ﻿@inherits DotNetNuke.Web.Mvc.Framework.DnnWebViewPage<BaBoMaZso.MakeYourMeal.Models.MealViewModel>
 @using BaBoMaZso.MakeYourMeal.Models
 @using System.Linq
-@using System.Collections.Generic
-
+@using DotNetNuke.Entities.Portals
 
 <form action="@Url.Action("Assemble", "Item")" method="post" class="make-your-meal-form" id="mealForm">
     @Html.AntiForgeryToken()
 
     <div id="Items-@Dnn.ModuleContext.ModuleId" class="meal-wizard">
 
-        <!-- Egy lépés -->
-        @helper RenderStep(string title, IEnumerable<BaBoMaZso.MakeYourMeal.Models.ProductOptionViewModel> options, string inputName, bool isSingleSelect, string limitClass = "", int step = 1)
+        @helper RenderStep(string title, IEnumerable<ProductOptionViewModel> options, string inputName, bool singleSelect, string limitClass = "", int step = 1)
         {
+            var portalAlias = HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Authority).TrimEnd('/');
+            var portalId = PortalSettings.Current.PortalId;
+
             <div class="wizard-step" data-step="@step" style="@(step == 1 ? "" : "display:none;")">
                 <h3>@title</h3>
                 <div class="d-flex flex-wrap">
-                    @foreach (var item in options ?? Enumerable.Empty<BaBoMaZso.MakeYourMeal.Models.ProductOptionViewModel>())
+                    @foreach (var item in options ?? Enumerable.Empty<ProductOptionViewModel>())
                     {
+                        var fullImageUrl = "";
+                        if (!string.IsNullOrEmpty(item.ImageUrl))
+                        {
+                            fullImageUrl = portalAlias + "/Portals/" + portalId + "/Hotcakes/Data/products/" + item.Value + "/medium/" + item.ImageUrl;
+                        }
+
                         <div class="card m-2" style="width: 150px;">
-                            @if (!string.IsNullOrEmpty(item.ImageUrl))
+                            @if (!string.IsNullOrEmpty(fullImageUrl))
                             {
-                                <img class="card-img-top" src="@item.ImageUrl" alt="@item.Name" style="height:100px; object-fit:contain;" />
+                                <img src="@fullImageUrl" alt="@item.Name" class="card-img-top" style="height: 100px; object-fit: contain;" />
                             }
                             <div class="card-body p-2 text-center">
                                 <input class="form-check-input @(limitClass)"
-                                       type="@(isSingleSelect ? "radio" : "checkbox")"
+                                       type="@(singleSelect ? "radio" : "checkbox")"
                                        id="@(inputName + "_" + item.Value)"
-                                       name="@inputName@(isSingleSelect ? "" : "[]")"
+                                       name="@inputName@(singleSelect ? "" : "[]")"
                                        value="@item.Value"
-                                       required="@isSingleSelect" />
+                                       @(singleSelect ? "required" : "") />
                                 <label class="form-check-label" for="@(inputName + "_" + item.Value)">@item.Name</label>
                             </div>
                         </div>
@@ -41,14 +48,13 @@
             </div>
         }
 
-
         @RenderStep("1. Tészta (max 1 választható)", Model.Pastas, "SelectedPasta", true, "", 1)
         @RenderStep("2. Szósz (max 1 választható)", Model.Sauces, "SelectedSauce", true, "", 2)
         @RenderStep("3. Feltét 1 (max 2 választható)", Model.Toppings1, "SelectedToppings1", false, "limit-top1", 3)
         @RenderStep("4. Feltét 2 (max 2 választható)", Model.Toppings2, "SelectedToppings2", false, "limit-top2", 4)
         @RenderStep("5. Extrák (több is választható)", Model.Extras, "SelectedExtras", false, "", 5)
 
-        <!-- Összegzés -->
+        <!-- 6. lépés: Összegzés -->
         <div class="wizard-step" data-step="6" style="display:none;">
             <h3>6. Összegzés és kosárba helyezés</h3>
             <div id="meal-summary" class="mb-3"></div>
@@ -70,12 +76,16 @@
 
         function updateSummary() {
             var summary = [];
+
             function collect(name, label) {
                 var selected = $('input[name="' + name + '"]:checked, input[name="' + name + '[]"]:checked')
                     .map(function () { return $(this).next('label').text().trim(); })
                     .get();
-                if (selected.length) summary.push(label + ": " + selected.join(', '));
+                if (selected.length) {
+                    summary.push(label + ": " + selected.join(', '));
+                }
             }
+
             collect('SelectedPasta', 'Tészta');
             collect('SelectedSauce', 'Szósz');
             collect('SelectedToppings1', 'Feltét 1');
@@ -98,14 +108,18 @@
             showStep(currentStep);
 
             $('.btn-next').click(function () {
-                currentStep = Math.min(currentStep + 1, totalSteps);
-                showStep(currentStep);
-                if (currentStep === totalSteps) updateSummary();
+                if (currentStep < totalSteps) {
+                    currentStep++;
+                    showStep(currentStep);
+                    if (currentStep === totalSteps) updateSummary();
+                }
             });
 
             $('.btn-prev').click(function () {
-                currentStep = Math.max(currentStep - 1, 1);
-                showStep(currentStep);
+                if (currentStep > 1) {
+                    currentStep--;
+                    showStep(currentStep);
+                }
             });
 
             limitCheckboxes('.limit-top1', 2);

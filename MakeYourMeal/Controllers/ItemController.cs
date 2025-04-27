@@ -49,7 +49,6 @@ namespace BaBoMaZso.MakeYourMeal.Controllers
 
             AddToCart(model.SelectedPasta, cart);
             AddToCart(model.SelectedSauce, cart);
-
             AddMultipleToCart(model.SelectedToppings1, cart);
             AddMultipleToCart(model.SelectedToppings2, cart);
             AddMultipleToCart(model.SelectedExtras, cart);
@@ -59,25 +58,6 @@ namespace BaBoMaZso.MakeYourMeal.Controllers
             return Redirect("/HotcakesStore/Cart");
         }
 
-        private List<ProductOptionViewModel> LoadOptions(string categorySlug)
-        {
-            var category = _hcc.CatalogServices.Categories.FindBySlug(categorySlug);
-            if (category == null) return new List<ProductOptionViewModel>();
-
-            int total = 0;
-            var products = _hcc.CatalogServices.Products.FindByCriteria(new ProductSearchCriteria
-            {
-                CategoryId = category.Bvin,
-                DisplayInactiveProducts = true
-            }, 1, int.MaxValue, ref total);
-
-            return products.Select(p => new ProductOptionViewModel
-            {
-                Name = p.ProductName,
-                Value = p.Bvin,
-                ImageUrl = p.ImageFileSmall
-            }).ToList();
-        }
 
         private void AddToCart(string bvin, Order cart)
         {
@@ -105,5 +85,41 @@ namespace BaBoMaZso.MakeYourMeal.Controllers
                 AddToCart(bvin, cart);
             }
         }
+
+        private List<ProductOptionViewModel> LoadOptions(string categorySlug)
+        {
+            var category = _hcc.CatalogServices.Categories.FindBySlug(categorySlug);
+            if (category == null)
+                return new List<ProductOptionViewModel>();
+
+            int total = 0;
+            var products = _hcc.CatalogServices.Products.FindByCriteria(new ProductSearchCriteria
+            {
+                CategoryId = category.Bvin,
+                DisplayInactiveProducts = true
+            }, 1, int.MaxValue, ref total);
+
+            return products.Select(p => new ProductOptionViewModel
+            {
+                Name = p.ProductName,
+                Value = p.Bvin,
+                ImageUrl = GetProductImageUrl(p)
+            }).ToList();
+        }
+
+
+        private string GetProductImageUrl(Product p)
+        {
+            if (p == null || string.IsNullOrEmpty(p.ImageFileMedium))
+                return "";
+
+            var baseUrl = Request.Url.GetLeftPart(UriPartial.Authority).TrimEnd('/');
+            var portalId = PortalSettings.PortalId; 
+            var filename = p.ImageFileMedium;
+
+            return $"{baseUrl}/Portals/{portalId}/Hotcakes/Data/products/{p.Bvin}/medium/{filename}";
+        }
+
+
     }
 }
