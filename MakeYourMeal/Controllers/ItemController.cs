@@ -8,6 +8,7 @@ using DotNetNuke.Web.Mvc.Framework.Controllers;
 using Hotcakes.Commerce;
 using Hotcakes.Commerce.Catalog;
 using Hotcakes.Commerce.Orders;
+using DotNetNuke.Entities.Portals;
 
 namespace BaBoMaZso.MakeYourMeal.Controllers
 {
@@ -38,35 +39,38 @@ namespace BaBoMaZso.MakeYourMeal.Controllers
 
         [HttpPost]
         [DotNetNuke.Web.Mvc.Framework.ActionFilters.ValidateAntiForgeryToken]
-        public ActionResult Assemble(MealViewModel model)
+        public ActionResult AddToCartAjax(MealViewModel model)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return RedirectToAction("Assemble");
+                var cart = _hcc.OrderServices.EnsureShoppingCart();
+
+                AddProductToCart(model.SelectedPasta, cart);
+                AddProductToCart(model.SelectedSauce, cart);
+                AddProductsToCart(ParseSelectedItems(model.SelectedToppings1), cart);
+                AddProductsToCart(ParseSelectedItems(model.SelectedToppings2), cart);
+                AddProductsToCart(ParseSelectedItems(model.SelectedExtras), cart);
+
+                _hcc.OrderServices.Orders.Update(cart);
+
+                return Json(new { success = true });
             }
-
-            var cart = _hcc.OrderServices.EnsureShoppingCart();
-
-            AddToCart(model.SelectedPasta, cart);
-            AddToCart(model.SelectedSauce, cart);
-            AddMultipleToCart(model.SelectedToppings1, cart);
-            AddMultipleToCart(model.SelectedToppings2, cart);
-            AddMultipleToCart(model.SelectedExtras, cart);
-
-            _hcc.OrderServices.Orders.Upsert(cart);
-
-            return Redirect("/HotcakesStore/Cart");
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
         }
 
-
-        private void AddToCart(string bvin, Order cart)
+        private void AddProductToCart(string bvin, Order cart)
         {
-            if (string.IsNullOrWhiteSpace(bvin)) return;
+            if (string.IsNullOrWhiteSpace(bvin))
+                return;
 
             var product = _hcc.CatalogServices.Products.Find(bvin);
-            if (product == null) return;
+            if (product == null)
+                return;
 
-            cart.Items.Add(new LineItem
+            var lineItem = new LineItem
             {
                 ProductId = product.Bvin,
                 ProductName = product.ProductName,
@@ -74,16 +78,30 @@ namespace BaBoMaZso.MakeYourMeal.Controllers
                 BasePricePerItem = product.SitePrice,
                 LineTotal = product.SitePrice,
                 ProductShortDescription = product.ShortDescription
-            });
+            };
+
+            _hcc.OrderServices.AddItemToOrder(cart, lineItem);
         }
 
-        private void AddMultipleToCart(IEnumerable<string> bvins, Order cart)
+
+        private void AddProductsToCart(IEnumerable<string> bvins, Order cart)
         {
-            if (bvins == null) return;
+            if (bvins == null)
+                return;
+
             foreach (var bvin in bvins)
             {
-                AddToCart(bvin, cart);
+                AddProductToCart(bvin, cart);
             }
+        }
+
+        private IEnumerable<string> ParseSelectedItems(string csvItems)
+        {
+            if (string.IsNullOrWhiteSpace(csvItems))
+                return Enumerable.Empty<string>();
+
+            return csvItems.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                           .Select(x => x.Trim());
         }
 
         private List<ProductOptionViewModel> LoadOptions(string categorySlug)
@@ -107,19 +125,16 @@ namespace BaBoMaZso.MakeYourMeal.Controllers
             }).ToList();
         }
 
-
-        private string GetProductImageUrl(Product p)
+        private string GetProductImageUrl(Product product)
         {
-            if (p == null || string.IsNullOrEmpty(p.ImageFileMedium))
+            if (product == null || string.IsNullOrEmpty(product.ImageFileMedium))
                 return "";
 
             var baseUrl = Request.Url.GetLeftPart(UriPartial.Authority).TrimEnd('/');
-            var portalId = PortalSettings.PortalId; 
-            var filename = p.ImageFileMedium;
+            var portalId = PortalSettings.Current.PortalId;
+            var path = $"/Portals/{portalId}/Hotcakes/Data/products/{product.Bvin}/medium/{product.ImageFileMedium}";
 
-            return $"{baseUrl}/Portals/{portalId}/Hotcakes/Data/products/{p.Bvin}/medium/{filename}";
+            return baseUrl + path;
         }
-
-
     }
 }
