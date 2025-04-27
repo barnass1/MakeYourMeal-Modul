@@ -11,14 +11,18 @@
 */
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Web;
+using System.Web.Mvc;
 
 namespace BaBoMaZso.MakeYourMeal.Models
 {
     public class Settings
     {
-        public bool Setting1 { get; set; }
-        public DateTime Setting2 { get; set; }
+        public bool Setting1 { get; set; } = false;
+        public DateTime Setting2 { get; set; } = DateTime.Now;
+        public int MaxExtras { get; set; } = 5;
+        public decimal ExtraPriceMultiplier { get; set; } = 1.0m;
+        public string EnabledCategorySlugs { get; set; } = "pastas,sauces,toppings1,toppings2,extras";
+        public string NoticeText { get; set; } = "Kérjük, válasszon legalább egy feltétet!";
+        public List<string> DefaultSauceOptions { get; set; } = new List<string>();
     }
 }

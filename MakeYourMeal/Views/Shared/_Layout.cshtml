@@ -1,5 +1,13 @@
-﻿<div id="mvcContainer-@Dnn.ActiveModule.ModuleID">
+﻿@inherits DotNetNuke.Web.Mvc.Framework.DnnWebViewPage<object>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewBag.Title</title>
+    @RenderSection("Head", required: false)
+</head>
+<body>
     @RenderBody()
-</div>
-
-
+</body>
+</html>

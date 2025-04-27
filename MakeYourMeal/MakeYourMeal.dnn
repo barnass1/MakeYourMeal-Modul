@@ -1,100 +1,89 @@
 <dotnetnuke type="Package" version="5.0">
-  <packages>
-    <package name="MakeYourMeal" type="Module" version="00.00.01">
-      <friendlyName>MakeYourMeal</friendlyName>
-      <description>MakeYourMeal</description>
-      <iconFile>~/Icons/Sigma/Software_32X32_Standard.png</iconFile>
-      <owner>
-        <name>Wok and Roll</name>
-        <organization>Wok and Roll</organization>
-        <url>https://http://rendfejl1019.northeurope.cloudapp.azure.com</url>
-        <email>store.wokandroll@gmail.com</email>
-      </owner>
-      <license src="License.txt"></license>
-      <releaseNotes src="ReleaseNotes.txt"></releaseNotes>
-      <dependencies>
-        <dependency type="CoreVersion">09.08.00</dependency>
-      </dependencies>
-      <components>
-        <component type="Script">
-          <scripts>
-            <basePath>DesktopModules\MVC\MakeYourMeal</basePath>
-            <script type="Install">
-              <path>Providers\DataProviders\SqlDataProvider</path>
-              <name>00.00.01.SqlDataProvider</name>
-              <version>00.00.01</version>
-            </script>
-            <script type="UnInstall">
-              <path>Providers\DataProviders\SqlDataProvider</path>
-              <name>Uninstall.SqlDataProvider</name>
-              <version>00.00.01</version>
-            </script>
-          </scripts>
-        </component>
-        <component type="ResourceFile">
-          <resourceFiles>
-            <basePath>DesktopModules/MVC/MakeYourMeal</basePath>
-            <resourceFile>
-              <name>Resources.zip</name>
-            </resourceFile>
-          </resourceFiles>
-        </component>
-        <component type="Module">
-          <desktopModule>
-            <moduleName>MakeYourMeal</moduleName>
-            <foldername>MakeYourMeal</foldername>
-            <businessControllerClass>BaBoMaZso.MakeYourMeal.Components.FeatureController</businessControllerClass>
-            <supportedFeatures />
-            <moduleDefinitions>
-              <moduleDefinition>
-                <friendlyName>MakeYourMeal</friendlyName>
-                <defaultCacheTime>0</defaultCacheTime>
-                <moduleControls>
-                  <moduleControl>
-                    <controlKey />
-                    <controlSrc>BaBoMaZso.MakeYourMeal.Controllers/Item/Index.mvc</controlSrc>
-                    <supportsPartialRendering>False</supportsPartialRendering>
-                    <controlTitle />
-                    <controlType>View</controlType>
-                    <iconFile />
-                    <helpUrl />
-                    <viewOrder>0</viewOrder>
-                  </moduleControl>
-                  <moduleControl>
-                    <controlKey>Edit</controlKey>
-                    <controlSrc>BaBoMaZso.MakeYourMeal.Controllers/Item/Edit.mvc</controlSrc>
-                    <supportsPartialRendering>False</supportsPartialRendering>
-                    <controlTitle>Edit Content</controlTitle>
-                    <controlType>Edit</controlType>
-                    <iconFile />
-                    <helpUrl />
-                    <viewOrder>0</viewOrder>
-                    <supportsPopUps>True</supportsPopUps>
-                  </moduleControl>
-                  <moduleControl>
-                    <controlKey>Settings</controlKey>
-                    <controlSrc>BaBoMaZso.MakeYourMeal.Controllers/Settings/Settings.mvc</controlSrc>
-                    <supportsPartialRendering>False</supportsPartialRendering>
-                    <controlTitle>MakeYourMeal Settings</controlTitle>
-                    <controlType>Edit</controlType>
-                    <iconFile />
-                    <helpUrl />
-                    <viewOrder>0</viewOrder>
-                  </moduleControl>
-                </moduleControls>
-              </moduleDefinition>
-            </moduleDefinitions>
-          </desktopModule>
-        </component>
-        <component type="Assembly">
-          <assemblies>
-            <assembly>
-              <name>MakeYourMeal.dll</name>
-              <path>bin</path>
-            </assembly>
-          </assemblies>
-        </component>
-      </components>
-    </package>
-  </packages>
+	<packages>
+		<package name="MakeYourMeal" type="Module" version="00.04.00">
+			<friendlyName>MakeYourMeal</friendlyName>
+			<description>MakeYourMeal</description>
+			<iconFile>~/Icons/Sigma/Software_32X32_Standard.png</iconFile>
+			<owner>
+				<name>Wok and Roll</name>
+				<organization>Wok and Roll</organization>
+				<url>https://rendfejl1019.northeurope.cloudapp.azure.com</url>
+				<email>store.wokandroll@gmail.com</email>
+			</owner>
+			<license src="License.txt"></license>
+			<releaseNotes src="ReleaseNotes.txt"></releaseNotes>
+			<dependencies>
+				<dependency type="CoreVersion">09.08.00</dependency>
+			</dependencies>
+			<components>
+				<component type="Script">
+					<scripts>
+						<basePath>DesktopModules\MVC\MakeYourMeal</basePath>
+						<script type="Install">
+							<path>Providers\DataProviders\SqlDataProvider</path>
+							<name>00.04.00.SqlDataProvider</name>
+							<version>00.04.00</version>
+						</script>
+						<script type="UnInstall">
+							<path>Providers\DataProviders\SqlDataProvider</path>
+							<name>Uninstall.SqlDataProvider</name>
+							<version>00.04.00</version>
+						</script>
+					</scripts>
+				</component>
+				<component type="ResourceFile">
+					<resourceFiles>
+						<basePath>DesktopModules/MVC/MakeYourMeal</basePath>
+						<resourceFile>
+							<name>Resources.zip</name>
+						</resourceFile>
+					</resourceFiles>
+				</component>
+				<component type="Module">
+					<desktopModule>
+						<moduleName>MakeYourMeal</moduleName>
+						<foldername>MakeYourMeal</foldername>
+						<businessControllerClass>BaBoMaZso.MakeYourMeal.Components.FeatureController</businessControllerClass>
+						<supportedFeatures />
+						<moduleDefinitions>
+							<moduleDefinition>
+								<friendlyName>MakeYourMeal</friendlyName>
+								<defaultCacheTime>0</defaultCacheTime>
+								<moduleControls>
+									<moduleControl>
+										<controlKey />
+										<controlSrc>BaBoMaZso.MakeYourMeal.Controllers/Item/Index.mvc</controlSrc>
+										<supportsPartialRendering>False</supportsPartialRendering>
+										<controlTitle>Main View</controlTitle>
+										<controlType>View</controlType>
+										<iconFile />
+										<helpUrl />
+										<viewOrder>0</viewOrder>
+									</moduleControl>
+									<moduleControl>
+										<controlKey>Settings</controlKey>
+										<controlSrc>BaBoMaZso.MakeYourMeal.Controllers/Settings/Settings.mvc</controlSrc>
+										<supportsPartialRendering>False</supportsPartialRendering>
+										<controlTitle>MakeYourMeal Settings</controlTitle>
+										<controlType>Edit</controlType>
+										<iconFile />
+										<helpUrl />
+										<viewOrder>2</viewOrder>
+									</moduleControl>
+								</moduleControls>
+							</moduleDefinition>
+						</moduleDefinitions>
+					</desktopModule>
+				</component>
+				<component type="Assembly">
+					<assemblies>
+						<assembly>
+							<name>MakeYourMeal.dll</name>
+							<path>bin</path>
+						</assembly>
+					</assemblies>
+				</component>
+			</components>
+		</package>
+	</packages>
 </dotnetnuke>

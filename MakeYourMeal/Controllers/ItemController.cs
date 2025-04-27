@@ -1,87 +1,140 @@
-﻿/*
-' Copyright (c) 2025 Wok and Roll
-'  All rights reserved.
-' 
-' THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
-' TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-' THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
-' CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-' DEALINGS IN THE SOFTWARE.
-' 
-*/
-
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Web.Mvc;
-using BaBoMaZso.MakeYourMeal.Components;
 using BaBoMaZso.MakeYourMeal.Models;
-using DotNetNuke.Entities.Users;
-using DotNetNuke.Framework.JavaScriptLibraries;
 using DotNetNuke.Web.Mvc.Framework.ActionFilters;
 using DotNetNuke.Web.Mvc.Framework.Controllers;
+using Hotcakes.Commerce;
+using Hotcakes.Commerce.Catalog;
+using Hotcakes.Commerce.Orders;
+using DotNetNuke.Entities.Portals;
 
 namespace BaBoMaZso.MakeYourMeal.Controllers
 {
     [DnnHandleError]
     public class ItemController : DnnController
     {
+        private readonly HotcakesApplication _hcc = HotcakesApplication.Current;
 
-        public ActionResult Delete(int itemId)
+        public ActionResult Index()
         {
-            ItemManager.Instance.DeleteItem(itemId, ModuleContext.ModuleId);
-            return RedirectToDefaultRoute();
+            return View("Index");
         }
 
-        public ActionResult Edit(int itemId = -1)
+        [HttpGet]
+        public ActionResult Assemble()
         {
-            DotNetNuke.Framework.JavaScriptLibraries.JavaScript.RequestRegistration(CommonJs.DnnPlugins);
+            var model = new MealViewModel
+            {
+                Pastas = LoadOptions("pastas"),
+                Sauces = LoadOptions("sauces"),
+                Toppings1 = LoadOptions("toppings1"),
+                Toppings2 = LoadOptions("toppings2"),
+                Extras = LoadOptions("extras")
+            };
 
-            var userlist = UserController.GetUsers(PortalSettings.PortalId);
-            var users = from user in userlist.Cast<UserInfo>().ToList()
-                        select new SelectListItem { Text = user.DisplayName, Value = user.UserID.ToString() };
-
-            ViewBag.Users = users;
-
-            var item = (itemId == -1)
-                 ? new Item { ModuleId = ModuleContext.ModuleId }
-                 : ItemManager.Instance.GetItem(itemId, ModuleContext.ModuleId);
-
-            return View(item);
+            return View("Assemble", model);
         }
 
         [HttpPost]
         [DotNetNuke.Web.Mvc.Framework.ActionFilters.ValidateAntiForgeryToken]
-        public ActionResult Edit(Item item)
+        public ActionResult AddToCartAjax(MealViewModel model)
         {
-            if (item.ItemId == -1)
+            try
             {
-                item.CreatedByUserId = User.UserID;
-                item.CreatedOnDate = DateTime.UtcNow;
-                item.LastModifiedByUserId = User.UserID;
-                item.LastModifiedOnDate = DateTime.UtcNow;
+                var cart = _hcc.OrderServices.EnsureShoppingCart();
 
-                ItemManager.Instance.CreateItem(item);
+                AddProductToCart(model.SelectedPasta, cart);
+                AddProductToCart(model.SelectedSauce, cart);
+                AddProductsToCart(ParseSelectedItems(model.SelectedToppings1), cart);
+                AddProductsToCart(ParseSelectedItems(model.SelectedToppings2), cart);
+                AddProductsToCart(ParseSelectedItems(model.SelectedExtras), cart);
+
+                _hcc.OrderServices.Orders.Update(cart);
+
+                return Json(new { success = true });
             }
-            else
+            catch (Exception ex)
             {
-                var existingItem = ItemManager.Instance.GetItem(item.ItemId, item.ModuleId);
-                existingItem.LastModifiedByUserId = User.UserID;
-                existingItem.LastModifiedOnDate = DateTime.UtcNow;
-                existingItem.ItemName = item.ItemName;
-                existingItem.ItemDescription = item.ItemDescription;
-                existingItem.AssignedUserId = item.AssignedUserId;
-
-                ItemManager.Instance.UpdateItem(existingItem);
+                return Json(new { success = false, message = ex.Message });
             }
-
-            return RedirectToDefaultRoute();
         }
 
-        [ModuleAction(ControlKey = "Edit", TitleKey = "AddItem")]
-        public ActionResult Index()
+        private void AddProductToCart(string bvin, Order cart)
         {
-            var items = ItemManager.Instance.GetItems(ModuleContext.ModuleId);
-            return View(items);
+            if (string.IsNullOrWhiteSpace(bvin))
+                return;
+
+            var product = _hcc.CatalogServices.Products.Find(bvin);
+            if (product == null)
+                return;
+
+            var lineItem = new LineItem
+            {
+                ProductId = product.Bvin,
+                ProductName = product.ProductName,
+                Quantity = 1,
+                BasePricePerItem = product.SitePrice,
+                LineTotal = product.SitePrice,
+                ProductShortDescription = product.ShortDescription
+            };
+
+            _hcc.OrderServices.AddItemToOrder(cart, lineItem);
+        }
+
+
+        private void AddProductsToCart(IEnumerable<string> bvins, Order cart)
+        {
+            if (bvins == null)
+                return;
+
+            foreach (var bvin in bvins)
+            {
+                AddProductToCart(bvin, cart);
+            }
+        }
+
+        private IEnumerable<string> ParseSelectedItems(string csvItems)
+        {
+            if (string.IsNullOrWhiteSpace(csvItems))
+                return Enumerable.Empty<string>();
+
+            return csvItems.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                           .Select(x => x.Trim());
+        }
+
+        private List<ProductOptionViewModel> LoadOptions(string categorySlug)
+        {
+            var category = _hcc.CatalogServices.Categories.FindBySlug(categorySlug);
+            if (category == null)
+                return new List<ProductOptionViewModel>();
+
+            int total = 0;
+            var products = _hcc.CatalogServices.Products.FindByCriteria(new ProductSearchCriteria
+            {
+                CategoryId = category.Bvin,
+                DisplayInactiveProducts = true
+            }, 1, int.MaxValue, ref total);
+
+            return products.Select(p => new ProductOptionViewModel
+            {
+                Name = p.ProductName,
+                Value = p.Bvin,
+                ImageUrl = GetProductImageUrl(p)
+            }).ToList();
+        }
+
+        private string GetProductImageUrl(Product product)
+        {
+            if (product == null || string.IsNullOrEmpty(product.ImageFileMedium))
+                return "";
+
+            var baseUrl = Request.Url.GetLeftPart(UriPartial.Authority).TrimEnd('/');
+            var portalId = PortalSettings.Current.PortalId;
+            var path = $"/Portals/{portalId}/Hotcakes/Data/products/{product.Bvin}/medium/{product.ImageFileMedium}";
+
+            return baseUrl + path;
         }
     }
 }

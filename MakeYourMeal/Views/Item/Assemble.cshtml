@@ -1,0 +1,161 @@
+﻿@inherits DotNetNuke.Web.Mvc.Framework.DnnWebViewPage<BaBoMaZso.MakeYourMeal.Models.MealViewModel>
+@using BaBoMaZso.MakeYourMeal.Models
+@using System.Linq
+@using DotNetNuke.Entities.Portals
+
+<form id="mealForm" method="post">
+    @Html.AntiForgeryToken()
+
+    <input type="hidden" name="SelectedPasta" id="SelectedPastaHidden" />
+    <input type="hidden" name="SelectedSauce" id="SelectedSauceHidden" />
+    <input type="hidden" name="SelectedToppings1" id="SelectedToppings1Hidden" />
+    <input type="hidden" name="SelectedToppings2" id="SelectedToppings2Hidden" />
+    <input type="hidden" name="SelectedExtras" id="SelectedExtrasHidden" />
+
+    <div id="Items-@Dnn.ModuleContext.ModuleId" class="meal-wizard">
+
+        @helper RenderStep(string title, IEnumerable<ProductOptionViewModel> options, string inputName, bool singleSelect, string limitClass = "", int step = 1)
+        {
+            var portalAlias = HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Authority).TrimEnd('/');
+            var portalId = PortalSettings.Current.PortalId;
+
+            <div class="wizard-step" data-step="@step" style="@(step == 1 ? "" : "display:none;")">
+                <h3>@title</h3>
+                <div class="d-flex flex-wrap">
+                    @foreach (var item in options ?? Enumerable.Empty<ProductOptionViewModel>())
+                    {
+                        var fullImageUrl = "";
+                        if (!string.IsNullOrEmpty(item.ImageUrl))
+                        {
+                            fullImageUrl = portalAlias + "/Portals/" + portalId + "/Hotcakes/Data/products/" + item.Value + "/medium/" + item.ImageUrl;
+                        }
+
+                        <div class="card m-2" style="width: 150px;">
+                            @if (!string.IsNullOrEmpty(fullImageUrl))
+                            {
+                                <img src="@fullImageUrl" alt="@item.Name" class="card-img-top" style="height: 100px; object-fit: contain;" />
+                            }
+                            <div class="card-body p-2 text-center">
+                                <input class="form-check-input @(limitClass)"
+                                       type="@(singleSelect ? "radio" : "checkbox")"
+                                       id="@(inputName + "_" + item.Value)"
+                                       name="@inputName@(singleSelect ? "" : "[]")"
+                                       value="@item.Value"
+                                       @(singleSelect ? "required" : "") />
+                                <label class="form-check-label" for="@(inputName + "_" + item.Value)">@item.Name</label>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div class="wizard-nav mt-3">
+                    <button type="button" class="btn btn-secondary btn-prev" @(step == 1 ? "disabled" : "")>Vissza</button>
+                    <button type="button" class="btn btn-primary btn-next">Tovább</button>
+                </div>
+            </div>
+        }
+
+        @RenderStep("1. Tészta (max 1 választható)", Model.Pastas, "SelectedPasta", true, "", 1)
+        @RenderStep("2. Szósz (max 1 választható)", Model.Sauces, "SelectedSauce", true, "", 2)
+        @RenderStep("3. Feltét 1 (max 2 választható)", Model.Toppings1, "SelectedToppings1", false, "limit-top1", 3)
+        @RenderStep("4. Feltét 2 (max 2 választható)", Model.Toppings2, "SelectedToppings2", false, "limit-top2", 4)
+        @RenderStep("5. Extrák (több is választható)", Model.Extras, "SelectedExtras", false, "", 5)
+
+        <div class="wizard-step" data-step="6" style="display:none;">
+            <h3>6. Összegzés és kosárba helyezés</h3>
+            <div id="meal-summary" class="mb-3"></div>
+            <button type="submit" class="btn btn-success">Kosárba helyezés</button>
+        </div>
+
+    </div>
+</form>
+
+<script type="text/javascript">
+(function ($) {
+    var currentStep = 1;
+    var totalSteps = 6;
+
+    function showStep(step) {
+        $('.wizard-step').hide().removeClass('active');
+        $('.wizard-step[data-step="' + step + '"]').show().addClass('active');
+    }
+
+    function updateSummary() {
+        var summary = [];
+
+        function collect(name, label) {
+            var selected = $('input[name="' + name + '"]:checked, input[name="' + name + '[]"]:checked')
+                .map(function () { return $(this).next('label').text().trim(); })
+                .get();
+            if (selected.length) {
+                summary.push(label + ": " + selected.join(', '));
+            }
+        }
+
+        collect('SelectedPasta', 'Tészta');
+        collect('SelectedSauce', 'Szósz');
+        collect('SelectedToppings1', 'Feltét 1');
+        collect('SelectedToppings2', 'Feltét 2');
+        collect('SelectedExtras', 'Extrák');
+
+        $('#meal-summary').html(summary.join('<br/>'));
+    }
+
+    function limitCheckboxes(selector, max) {
+        $(document).on('change', selector, function () {
+            if ($(selector + ':checked').length > max) {
+                this.checked = false;
+                alert('Maximum ' + max + ' választható!');
+            }
+        });
+    }
+
+    $(document).ready(function () {
+        showStep(currentStep);
+
+        $('.btn-next').click(function () {
+            if (currentStep < totalSteps) {
+                currentStep++;
+                showStep(currentStep);
+                if (currentStep === totalSteps) updateSummary();
+            }
+        });
+
+        $('.btn-prev').click(function () {
+            if (currentStep > 1) {
+                currentStep--;
+                showStep(currentStep);
+            }
+        });
+
+        limitCheckboxes('.limit-top1', 2);
+        limitCheckboxes('.limit-top2', 2);
+
+        $('#mealForm').submit(function (e) {
+            e.preventDefault();
+
+            $('#SelectedPastaHidden').val($('input[name="SelectedPasta"]:checked').val());
+            $('#SelectedSauceHidden').val($('input[name="SelectedSauce"]:checked').val());
+            $('#SelectedToppings1Hidden').val($('input[name="SelectedToppings1[]"]:checked').map(function() { return this.value; }).get().join(','));
+            $('#SelectedToppings2Hidden').val($('input[name="SelectedToppings2[]"]:checked').map(function() { return this.value; }).get().join(','));
+            $('#SelectedExtrasHidden').val($('input[name="SelectedExtras[]"]:checked').map(function() { return this.value; }).get().join(','));
+
+            $.ajax({
+                url: '@Url.Action("AddToCartAjax", "Item")',
+                method: 'POST',
+                data: $(this).serialize(),
+                success: function (response) {
+                    if (response.success) {
+                        window.location.href = '/HotcakesStore/Cart';
+                    } else {
+                        alert('Hiba történt: ' + (response.message || 'Ismeretlen hiba'));
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error(xhr.responseText);
+                    alert('Hiba a kosárba helyezés közben: ' + error);
+                }
+            });
+        });
+    });
+})(jQuery);
+</script>
