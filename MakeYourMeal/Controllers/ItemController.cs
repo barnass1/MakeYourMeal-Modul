@@ -121,20 +121,7 @@ namespace BaBoMaZso.MakeYourMeal.Controllers
             {
                 Name = p.ProductName,
                 Value = p.Bvin,
-                ImageUrl = GetProductImageUrl(p)
             }).ToList();
-        }
-
-        private string GetProductImageUrl(Product product)
-        {
-            if (product == null || string.IsNullOrEmpty(product.ImageFileMedium))
-                return "";
-
-            var baseUrl = Request.Url.GetLeftPart(UriPartial.Authority).TrimEnd('/');
-            var portalId = PortalSettings.Current.PortalId;
-            var path = $"/Portals/{portalId}/Hotcakes/Data/products/{product.Bvin}/medium/{product.ImageFileMedium}";
-
-            return baseUrl + path;
         }
     }
 }
