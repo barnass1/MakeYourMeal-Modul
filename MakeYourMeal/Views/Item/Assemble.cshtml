@@ -33,7 +33,7 @@
                         <div class="card m-2" style="width: 150px;">
                             @if (!string.IsNullOrEmpty(fullImageUrl))
                             {
-                                <img src="@fullImageUrl" alt="@item.Name" class="card-img-top" style="height: 100px; object-fit: contain;" />
+                                <img src="@fullImageUrl" alt="@item.Name" class="card-img-top" style="height: 200px; object-fit: contain;" />
                             }
                             <div class="card-body p-2 text-center">
                                 <input class="form-check-input @(limitClass)"
@@ -135,24 +135,32 @@
 
             $('#SelectedPastaHidden').val($('input[name="SelectedPasta"]:checked').val());
             $('#SelectedSauceHidden').val($('input[name="SelectedSauce"]:checked').val());
-            $('#SelectedToppings1Hidden').val($('input[name="SelectedToppings1[]"]:checked').map(function() { return this.value; }).get().join(','));
-            $('#SelectedToppings2Hidden').val($('input[name="SelectedToppings2[]"]:checked').map(function() { return this.value; }).get().join(','));
-            $('#SelectedExtrasHidden').val($('input[name="SelectedExtras[]"]:checked').map(function() { return this.value; }).get().join(','));
+            $('#SelectedToppings1Hidden').val($('input[name="SelectedToppings1[]"]:checked').map(function () { return this.value; }).get().join(','));
+            $('#SelectedToppings2Hidden').val($('input[name="SelectedToppings2[]"]:checked').map(function () { return this.value; }).get().join(','));
+            $('#SelectedExtrasHidden').val($('input[name="SelectedExtras[]"]:checked').map(function () { return this.value; }).get().join(','));
 
             $.ajax({
-                url: '@Url.Action("AddToCartAjax", "Item")',
+                url: '@Url.Action("AddToCartAjax", "Item", new { moduleId = Dnn.ModuleContext.ModuleId, tabId = Dnn.ModuleContext.TabId })',
                 method: 'POST',
                 data: $(this).serialize(),
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val(),
+                    'ModuleId': '@Dnn.ModuleContext.ModuleId',
+                    'TabId': '@Dnn.ModuleContext.TabId'
+                },
                 success: function (response) {
                     if (response.success) {
-                        window.location.href = '/HotcakesStore/Cart';
+                        if (window.hcc && window.hcc.updateMiniCart) {
+                            window.hcc.updateMiniCart();
+                        }
+                        alert(response.message || 'Termék sikeresen kosárba helyezve!');
                     } else {
-                        alert('Hiba történt: ' + (response.message || 'Ismeretlen hiba'));
+                        alert('Hiba: ' + (response.message || 'Ismeretlen hiba'));
                     }
                 },
                 error: function (xhr, status, error) {
-                    console.error(xhr.responseText);
-                    alert('Hiba a kosárba helyezés közben: ' + error);
+                    console.error('Hiba részletek:', xhr.responseText);
+                    alert('Hiba a kosárba helyezés közben: ' + (xhr.responseJSON?.message || error));
                 }
             });
         });

@@ -1,15 +1,9 @@
 ﻿@inherits DotNetNuke.Web.Mvc.Framework.DnnWebViewPage
-@using System.Web.Mvc
-@using DotNetNuke.Entities.Users
+    @using System.Web.Mvc
+    @using DotNetNuke.Entities.Users
+    <div class="meal-promo">
+        <h2>Állítsd össze saját tésztádat!</h2>
+        <p>Válassz tésztát, szószt, feltéteket és extrákat, hogy elkészítsd a személyre szabott ebédedet!</p>
 
-@{
-    var userInfo = UserController.Instance.GetCurrentUserInfo();
-    var isAdmin = userInfo.IsInRole("Administrators");
-}
-
-<div class="meal-promo">
-    <h2>Állítsd össze saját tésztádat!</h2>
-    <p>Válassz tésztát, szószt, feltéteket és extrákat, hogy elkészítsd a személyre szabott ebédedet!</p>
-
-    <a class="dnnPrimaryAction" href="@Url.Action("Assemble", "Item")">Új rendelés leadása</a>
-</div>
+        <a class="dnnPrimaryAction" href="@Url.Action("Assemble", "Item")">Új rendelés leadása</a>
+    </div>
