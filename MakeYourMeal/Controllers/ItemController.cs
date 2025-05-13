@@ -46,9 +46,7 @@ namespace BaBoMaZso.MakeYourMeal.Controllers
             }
         }
 
-        [AllowAnonymous]
         [HttpPost]
-        [DotNetNuke.Web.Mvc.Framework.ActionFilters.ValidateAntiForgeryToken]
         public ActionResult AddToCartAjax(MealViewModel model)
         {
             try
@@ -58,51 +56,18 @@ namespace BaBoMaZso.MakeYourMeal.Controllers
                     return Json(new { success = false, message = "Érvénytelen adatok." });
                 }
 
-                var cart = _hcc.OrderServices.EnsureShoppingCart();
+                // Példa: a szükséges adatok kinyerése a formból
+                string productId = Request.Form["ProductId"];
+                string productBvin = Request.Form["bvin"];
+                string nev = Request.Form["ProductName"];
 
-                // Alaptermék SKU alapján
-                var baseProduct = _hcc.CatalogServices.Products.FindBySku("ABC123"); // Cseréld le a saját SKU-ra
-                if (baseProduct == null)
-                {
-                    return Json(new { success = false, message = "Nem található az alap ételtermék." });
-                }
+                // Kosárba rakás
+                KosarbaRakas(productBvin, nev);
 
-                var ingredientNames = new List<string>();
-                decimal totalPrice = 0;
+                // Kosár URL
+                string kosarUrl = "http://" + DotNetNuke.Entities.Portals.PortalSettings.Current.PortalAlias.HTTPAlias + "/Cart/";
 
-                void Add(string bvin)
-                {
-                    if (string.IsNullOrWhiteSpace(bvin)) return;
-                    var p = _hcc.CatalogServices.Products.Find(bvin);
-                    if (p != null)
-                    {
-                        ingredientNames.Add(p.ProductName);
-                        totalPrice += p.SitePrice;
-                    }
-                }
-
-                void AddMany(IEnumerable<string> bvins)
-                {
-                    foreach (var bvin in bvins) Add(bvin);
-                }
-
-                Add(model.SelectedPasta);
-                Add(model.SelectedSauce);
-                AddMany(ParseSelectedItems(model.SelectedToppings1));
-                AddMany(ParseSelectedItems(model.SelectedToppings2));
-                AddMany(ParseSelectedItems(model.SelectedExtras));
-
-                var summary = string.Join(" + ", ingredientNames);
-
-                var lineItem = baseProduct.ConvertToLineItem(_hcc, 1, new OptionSelections());
-                lineItem.ProductName += " – " + summary;
-                lineItem.ProductShortDescription = summary;
-                lineItem.BasePricePerItem = totalPrice;
-                lineItem.LineTotal = totalPrice;
-
-                _hcc.AddToOrderWithCalculateAndSave(cart, lineItem);
-
-                return Json(new { success = true, message = "Termék sikeresen kosárba helyezve." });
+                return Json(new { success = true, redirectUrl = kosarUrl });
             }
             catch (Exception ex)
             {
@@ -111,13 +76,36 @@ namespace BaBoMaZso.MakeYourMeal.Controllers
             }
         }
 
-        private IEnumerable<string> ParseSelectedItems(string csvItems)
+        public bool KosarbaRakas(string bvin, string nev)
         {
-            if (string.IsNullOrWhiteSpace(csvItems))
-                return Enumerable.Empty<string>();
 
-            return csvItems.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                           .Select(x => x.Trim());
+            var HccApp = HotcakesApplication.Current;
+            if (HccApp == null)
+            {
+                return false;
+            }
+
+            if (HccApp.OrderServices == null)
+            {
+                return false;
+            }
+
+            Order order = HccApp.OrderServices.CurrentShoppingCart();
+
+            if (order == null)
+            {
+                order = HccApp.OrderServices.EnsureShoppingCart();
+            }
+
+            var lineItem = new LineItem
+            {
+                ProductId = bvin,
+                ProductName = nev,
+            };
+
+            bool result = HccApp.AddToOrderAndSave(order, lineItem);
+
+            return result;
         }
 
         private List<ProductOptionViewModel> LoadOptions(string categorySlug)

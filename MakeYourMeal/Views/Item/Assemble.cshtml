@@ -3,7 +3,7 @@
 @using System.Linq
 @using DotNetNuke.Entities.Portals
 
-<form id="mealForm" method="post">
+<form id="mealForm">
     @Html.AntiForgeryToken()
 
     <input type="hidden" name="SelectedPasta" id="SelectedPastaHidden" />
@@ -22,7 +22,7 @@
             <div class="wizard-step" data-step="@step" style="@(step == 1 ? "" : "display:none;")">
                 <h3>@title</h3>
                 <div class="d-flex flex-wrap">
-                    @foreach (var item in options ?? Enumerable.Empty<ProductOptionViewModel>())
+                    @foreach (var item in (options ?? new List<ProductOptionViewModel>()))
                     {
                         var fullImageUrl = "";
                         if (!string.IsNullOrEmpty(item.ImageUrl))
@@ -160,7 +160,11 @@
                 },
                 error: function (xhr, status, error) {
                     console.error('Hiba részletek:', xhr.responseText);
-                    alert('Hiba a kosárba helyezés közben: ' + (xhr.responseJSON?.message || error));
+                    if (xhr.status === 401 || xhr.status === 403) {
+                        alert('Nincs jogosultság. Kérlek, jelentkezz be újra.');
+                    } else {
+                        alert('Hiba a kosárba helyezés közben: ' + (xhr.responseJSON?.message || error));
+                    }
                 }
             });
         });
