@@ -16,19 +16,12 @@
 
         @helper RenderStep(string title, IEnumerable<ProductOptionViewModel> options, string inputName, bool singleSelect, string limitClass = "", int step = 1)
         {
-            var portalAlias = HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Authority).TrimEnd('/');
-            var portalId = PortalSettings.Current.PortalId;
-
             <div class="wizard-step" data-step="@step" style="@(step == 1 ? "" : "display:none;")">
                 <h3>@title</h3>
                 <div class="d-flex flex-wrap">
                     @foreach (var item in (options ?? new List<ProductOptionViewModel>()))
                     {
-                        var fullImageUrl = "";
-                        if (!string.IsNullOrEmpty(item.ImageUrl))
-                        {
-                            fullImageUrl = portalAlias + "/Portals/" + portalId + "/Hotcakes/Data/products/" + item.Value + "/medium/" + item.ImageUrl;
-                        }
+                        var fullImageUrl = item.ImageUrl;
 
                         <div class="card m-2" style="width: 150px;">
                             @if (!string.IsNullOrEmpty(fullImageUrl))
@@ -38,11 +31,11 @@
                             <div class="card-body p-2 text-center">
                                 <input class="form-check-input @(limitClass)"
                                        type="@(singleSelect ? "radio" : "checkbox")"
-                                       id="@(inputName + "_" + item.Value)"
+                                       id="@(inputName + "_" + item.Sku)"
                                        name="@inputName@(singleSelect ? "" : "[]")"
-                                       value="@item.Value"
+                                       value="@item.Sku"
                                        @(singleSelect ? "required" : "") />
-                                <label class="form-check-label" for="@(inputName + "_" + item.Value)">@item.Name</label>
+                                <label class="form-check-label" for="@(inputName + "_" + item.Sku)">@item.Name</label>
                             </div>
                         </div>
                     }
@@ -54,6 +47,7 @@
             </div>
         }
 
+
         @RenderStep("1. Tészta (max 1 választható)", Model.Pastas, "SelectedPasta", true, "", 1)
         @RenderStep("2. Szósz (max 1 választható)", Model.Sauces, "SelectedSauce", true, "", 2)
         @RenderStep("3. Feltét 1 (max 2 választható)", Model.Toppings1, "SelectedToppings1", false, "limit-top1", 3)
@@ -63,111 +57,121 @@
         <div class="wizard-step" data-step="6" style="display:none;">
             <h3>6. Összegzés és kosárba helyezés</h3>
             <div id="meal-summary" class="mb-3"></div>
-            <button type="submit" class="btn btn-success">Kosárba helyezés</button>
+
+            <div class="wizard-nav mt-3">
+                <button type="button" class="btn btn-secondary btn-prev">Vissza</button>
+                <button type="button" id="submitMeal" class="btn btn-primary btn-next">Kosárba helyezés</button>
+            </div>
         </div>
+
 
     </div>
 </form>
 
 <script type="text/javascript">
-(function ($) {
-    var currentStep = 1;
-    var totalSteps = 6;
+    (function ($) {
+        var currentStep = 1;
+        var totalSteps = 6;
 
-    function showStep(step) {
-        $('.wizard-step').hide().removeClass('active');
-        $('.wizard-step[data-step="' + step + '"]').show().addClass('active');
-    }
-
-    function updateSummary() {
-        var summary = [];
-
-        function collect(name, label) {
-            var selected = $('input[name="' + name + '"]:checked, input[name="' + name + '[]"]:checked')
-                .map(function () { return $(this).next('label').text().trim(); })
-                .get();
-            if (selected.length) {
-                summary.push(label + ": " + selected.join(', '));
-            }
+        function showStep(step) {
+            $('.wizard-step').hide().removeClass('active');
+            $('.wizard-step[data-step="' + step + '"]').show().addClass('active');
         }
 
-        collect('SelectedPasta', 'Tészta');
-        collect('SelectedSauce', 'Szósz');
-        collect('SelectedToppings1', 'Feltét 1');
-        collect('SelectedToppings2', 'Feltét 2');
-        collect('SelectedExtras', 'Extrák');
+        function updateSummary() {
+            var summary = [];
 
-        $('#meal-summary').html(summary.join('<br/>'));
-    }
-
-    function limitCheckboxes(selector, max) {
-        $(document).on('change', selector, function () {
-            if ($(selector + ':checked').length > max) {
-                this.checked = false;
-                alert('Maximum ' + max + ' választható!');
+            function collect(name, label) {
+                var selected = $('input[name="' + name + '"]:checked, input[name="' + name + '[]"]:checked')
+                    .map(function () { return $(this).next('label').text().trim(); })
+                    .get();
+                if (selected.length) {
+                    summary.push(label + ": " + selected.join(', '));
+                }
             }
-        });
-    }
 
-    $(document).ready(function () {
-        showStep(currentStep);
+            collect('SelectedPasta', 'Tészta');
+            collect('SelectedSauce', 'Szósz');
+            collect('SelectedToppings1', 'Feltét 1');
+            collect('SelectedToppings2', 'Feltét 2');
+            collect('SelectedExtras', 'Extrák');
 
-        $('.btn-next').click(function () {
-            if (currentStep < totalSteps) {
-                currentStep++;
-                showStep(currentStep);
-                if (currentStep === totalSteps) updateSummary();
-            }
-        });
+            $('#meal-summary').html(summary.join('<br/>'));
+        }
 
-        $('.btn-prev').click(function () {
-            if (currentStep > 1) {
-                currentStep--;
-                showStep(currentStep);
-            }
-        });
-
-        limitCheckboxes('.limit-top1', 2);
-        limitCheckboxes('.limit-top2', 2);
-
-        $('#mealForm').submit(function (e) {
-            e.preventDefault();
-
-            $('#SelectedPastaHidden').val($('input[name="SelectedPasta"]:checked').val());
-            $('#SelectedSauceHidden').val($('input[name="SelectedSauce"]:checked').val());
-            $('#SelectedToppings1Hidden').val($('input[name="SelectedToppings1[]"]:checked').map(function () { return this.value; }).get().join(','));
-            $('#SelectedToppings2Hidden').val($('input[name="SelectedToppings2[]"]:checked').map(function () { return this.value; }).get().join(','));
-            $('#SelectedExtrasHidden').val($('input[name="SelectedExtras[]"]:checked').map(function () { return this.value; }).get().join(','));
-
-            $.ajax({
-                url: '@Url.Action("AddToCartAjax", "Item", new { moduleId = Dnn.ModuleContext.ModuleId, tabId = Dnn.ModuleContext.TabId })',
-                method: 'POST',
-                data: $(this).serialize(),
-                headers: {
-                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val(),
-                    'ModuleId': '@Dnn.ModuleContext.ModuleId',
-                    'TabId': '@Dnn.ModuleContext.TabId'
-                },
-                success: function (response) {
-                    if (response.success) {
-                        if (window.hcc && window.hcc.updateMiniCart) {
-                            window.hcc.updateMiniCart();
-                        }
-                        alert(response.message || 'Termék sikeresen kosárba helyezve!');
-                    } else {
-                        alert('Hiba: ' + (response.message || 'Ismeretlen hiba'));
-                    }
-                },
-                error: function (xhr, status, error) {
-                    console.error('Hiba részletek:', xhr.responseText);
-                    if (xhr.status === 401 || xhr.status === 403) {
-                        alert('Nincs jogosultság. Kérlek, jelentkezz be újra.');
-                    } else {
-                        alert('Hiba a kosárba helyezés közben: ' + (xhr.responseJSON?.message || error));
-                    }
+        function limitCheckboxes(selector, max) {
+            $(document).on('change', selector, function () {
+                if ($(selector + ':checked').length > max) {
+                    this.checked = false;
+                    alert('Maximum ' + max + ' választható!');
                 }
             });
+        }
+
+        $(document).ready(function () {
+            showStep(currentStep);
+
+            $('.btn-next').click(function () {
+                if (currentStep < totalSteps) {
+                    currentStep++;
+                    showStep(currentStep);
+                    if (currentStep === totalSteps) updateSummary();
+                }
+            });
+
+            $('.btn-prev').click(function () {
+                if (currentStep > 1) {
+                    currentStep--;
+                    showStep(currentStep);
+                }
+            });
+
+            limitCheckboxes('.limit-top1', 2);
+            limitCheckboxes('.limit-top2', 2);
+
+            $('#submitMeal').click(function (e) {
+                e.preventDefault();
+
+                var skuList = [];
+                var qtyList = [];
+
+                var pasta = $('input[name="SelectedPasta"]:checked').val();
+                var sauce = $('input[name="SelectedSauce"]:checked').val();
+
+                if (!pasta) {
+                    alert("Kérlek, válassz egy tésztát!");
+                    return;
+                }
+                if (!sauce) {
+                    alert("Kérlek, válassz egy szószt!");
+                    return;
+                }
+
+                skuList.push(pasta);
+                qtyList.push(1);
+
+                skuList.push(sauce);
+                qtyList.push(1);
+
+                var toppings1 = $('input[name="SelectedToppings1[]"]:checked').map(function () { return this.value; }).get();
+                var toppings2 = $('input[name="SelectedToppings2[]"]:checked').map(function () { return this.value; }).get();
+                var extras = $('input[name="SelectedExtras[]"]:checked').map(function () { return this.value; }).get();
+
+                toppings1.concat(toppings2).concat(extras).forEach(function (sku) {
+                    skuList.push(sku);
+                    qtyList.push(1);
+                });
+
+                if (skuList.length === 0) {
+                    alert("Nem választottál ki egyetlen elemet sem.");
+                    return;
+                }
+
+                var url = '/Cart?AddSku=' + skuList.join(',') + '&AddSkuQty=' + qtyList.join(',');
+                window.location.href = url;
+            });
         });
-    });
-})(jQuery);
+    })(jQuery);
 </script>
+
+

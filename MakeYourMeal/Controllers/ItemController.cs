@@ -124,10 +124,12 @@ namespace BaBoMaZso.MakeYourMeal.Controllers
             return products.Select(p => new ProductOptionViewModel
             {
                 Name = p.ProductName,
-                Value = p.Bvin,
+                Value = p.Bvin,               
+                Sku = p.Sku,                  
                 ImageUrl = GetProductImageUrl(p)
             }).ToList();
         }
+
 
         private string GetProductImageUrl(Product product)
         {

@@ -152,7 +152,7 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Providers\DataProviders\SqlDataProvider\00.04.00.SqlDataProvider" />
+    <Content Include="Providers\DataProviders\SqlDataProvider\01.00.00.SqlDataProvider" />
     <Content Include="Providers\DataProviders\SqlDataProvider\Uninstall.SqlDataProvider" />
   </ItemGroup>
   <ItemGroup>
