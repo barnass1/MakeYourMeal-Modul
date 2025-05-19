@@ -1,0 +1,232 @@
+.meal-promo {
+    background-color: #212C28;
+    color: #C29C3D;
+    padding: 120px 30px;
+    text-align: center;
+    font-family: 'Segoe UI', sans-serif;
+    border-radius: 0;
+}
+
+    .meal-promo h2 {
+        font-size: 2.2em;
+        margin-bottom: 20px;
+        color: #C29C3D;
+    }
+
+    .meal-promo p {
+        font-size: 1.1em;
+        margin-bottom: 30px;
+        line-height: 1.6;
+    }
+
+    .meal-promo a.dnnPrimaryAction {
+        padding: 14px 28px;
+        font-size: 1em;
+        font-weight: bold;
+        background-color: #212C28;
+        color: #C29C3D;
+        text-decoration: none;
+        display: inline-block;
+        border: none;
+        border-radius: 0;
+    }
+
+.meal-wizard {
+    overflow-x: hidden;
+    padding: 0 10px;
+}
+
+    .meal-wizard .wizard-step {
+        background-color: #212C28;
+        padding: 30px;
+        margin-bottom: 20px;
+        color: white;
+        border-radius: 0;
+    }
+
+    .meal-wizard h3 {
+        font-family: Georgia, 'Times New Roman', Times, serif;
+        font-size: 2.2em;
+        color: #C29C3D;
+        margin-bottom: 20px;
+    }
+
+    .meal-wizard .d-flex {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px;
+    }
+
+    .meal-wizard .card {
+        width: 100%;
+        max-width: 260px;
+        border-radius: 0;
+        box-shadow: none;
+        margin: 10px auto;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        box-sizing: border-box;
+    }
+
+    .meal-wizard .form-check-input {
+        display: none;
+    }
+
+    .meal-wizard .form-check-label {
+        display: inline-block;
+        width: 100%;
+        max-width: 220px;
+
+        background-color: #C29C3D;
+        color: #212C28;
+        font-size: 18px;
+        font-weight: bold;
+        text-align: center;
+        cursor: pointer;
+        margin: 0 auto 6px auto;
+        transition: background-color 0.2s ease, color 0.2s ease;
+        border: none;
+        position: relative;
+    }
+
+    .meal-wizard .form-check-input[type="radio"]:checked + .form-check-label::before,
+    .meal-wizard .form-check-input[type="checkbox"]:checked + .form-check-label::before {
+        content: "Kiválasztva";
+        background-color: white;
+        color: #C29C3D;
+        position: relative;
+    }
+
+    .meal-wizard .form-check-input[type="radio"]:not(:checked) + .form-check-label::before,
+    .meal-wizard .form-check-input[type="checkbox"]:not(:checked) + .form-check-label::before {
+        content: "Kiválasztás";
+        position: relative;
+    }
+
+    .meal-wizard .form-check-label::before {
+        display: inline-block;
+        vertical-align: middle;
+        width: 195px;
+        height: 100%;
+    }
+
+    .meal-wizard .card-body label {
+        font-size: 0.95em;
+        color: white;
+        display: block;
+        line-height: 1.9;
+        text-align: center;
+        word-break: break-word;
+        white-space: normal;
+        width: 195px;
+        max-width: 195px;
+        min-height: 2.4em;
+        margin: 0 auto;
+    }
+
+
+#meal-summary {
+    font-size: 1.2em;
+    line-height: 1.8em;
+    color: #fff;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    padding: 10px 0;
+}
+
+.btnvissza,
+.btnkov,
+.btnkosarba {
+    display: inline-block;
+    padding: 10px 22px;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    background-color: #C29C3D;
+    color: white;
+    border: none;
+    border-radius: 0;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
+    font-family: 'Segoe UI', sans-serif;
+    text-decoration: none;
+    min-width: 120px;
+    margin: 6px;
+}
+
+    .btnvissza:hover,
+    .btnkov:hover,
+    .btnkosarba:hover {
+        background-color: #b08933;
+        color: #1a2522;
+        transform: scale(1.02);
+    }
+
+.DnnModule[moduletitle*="MakeYourMeal"],
+#dnn_ctr571_ContentPane,
+.dnn_ContentPane > .DnnModule,
+.DnnModule .DNNContainer_Default {
+    background-color: #212C28 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+@media (max-width: 768px) {
+    .meal-wizard .wizard-step {
+        padding: 20px 12px;
+    }
+
+    .meal-wizard .card {
+        max-width: 260px;
+        margin: 12px auto;
+    }
+
+    .meal-wizard .form-check-label,
+    .meal-wizard .card-body label {
+        width: 100%;
+        max-width: 220px;
+        font-size: 15px;
+    }
+
+    .btnvissza,
+    .btnkov,
+    .btnkosarba {
+        width: 90%;
+        max-width: 240px;
+        padding: 8px 16px;
+        font-size: 15px;
+        margin: 12px auto;
+        display: block;
+    }
+
+    #meal-summary {
+        font-size: 1em;
+        line-height: 1.6;
+        padding: 8px;
+    }
+
+    .meal-promo {
+        padding: 40px 20px;
+    }
+
+        .meal-promo h2 {
+            font-size: 1.8em;
+        }
+
+        .meal-promo p {
+            font-size: 1em;
+        }
+}
+
+@media (max-width: 480px) {
+    .meal-wizard .form-check-input:checked + .form-check-label::before {
+        content: "✓";
+    }
+
+    .meal-wizard .form-check-input:not(:checked) + .form-check-label::before {
+        content: "+";
+    }
+}
