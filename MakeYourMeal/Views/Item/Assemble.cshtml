@@ -1,4 +1,4 @@
-﻿@inherits DotNetNuke.Web.Mvc.Framework.DnnWebViewPage<BaBoMaZso.MakeYourMeal.Models.MealViewModel>
+@inherits DotNetNuke.Web.Mvc.Framework.DnnWebViewPage<BaBoMaZso.MakeYourMeal.Models.MealViewModel>
 @using BaBoMaZso.MakeYourMeal.Models
 @using System.Linq
 @using DotNetNuke.Entities.Portals
@@ -41,26 +41,26 @@
                     }
                 </div>
                 <div class="wizard-nav mt-3">
-                    <button type="button" class="btn btn-secondary btn-prev" @(step == 1 ? "disabled" : "")>Vissza</button>
-                    <button type="button" class="btn btn-primary btn-next">Tovább</button>
+                    <button type="button" class="btnvissza" @(step == 1 ? "disabled" : "")>Vissza</button>
+                    <button type="button" class="btnkov">Tovább</button>
                 </div>
             </div>
         }
 
 
-        @RenderStep("1. Tészta (max 1 választható)", Model.Pastas, "SelectedPasta", true, "", 1)
-        @RenderStep("2. Szósz (max 1 választható)", Model.Sauces, "SelectedSauce", true, "", 2)
-        @RenderStep("3. Feltét 1 (max 2 választható)", Model.Toppings1, "SelectedToppings1", false, "limit-top1", 3)
-        @RenderStep("4. Feltét 2 (max 2 választható)", Model.Toppings2, "SelectedToppings2", false, "limit-top2", 4)
-        @RenderStep("5. Extrák (több is választható)", Model.Extras, "SelectedExtras", false, "", 5)
+        @RenderStep("Válassz egy tésztát!", Model.Pastas, "SelectedPasta", true, "", 1)
+        @RenderStep("Válassz egy szószt!", Model.Sauces, "SelectedSauce", true, "", 2)
+        @RenderStep("Válassz max 2 feltétet!", Model.Toppings1, "SelectedToppings1", false, "limit-top1", 3)
+        @RenderStep("Válassz max 2 további feltétet!", Model.Toppings2, "SelectedToppings2", false, "limit-top2", 4)
+        @RenderStep("Extrák", Model.Extras, "SelectedExtras", false, "", 5)
 
         <div class="wizard-step" data-step="6" style="display:none;">
-            <h3>6. Összegzés és kosárba helyezés</h3>
+            <h3>Összegzés</h3>
             <div id="meal-summary" class="mb-3"></div>
 
             <div class="wizard-nav mt-3">
-                <button type="button" class="btn btn-secondary btn-prev">Vissza</button>
-                <button type="button" id="submitMeal" class="btn btn-primary btn-next">Kosárba helyezés</button>
+                <button type="button" class="btnvissza">Vissza</button>
+                <button type="button" id="submitMeal" class="btnkosarba">Kosárba helyezés</button>
             </div>
         </div>
 
@@ -111,7 +111,7 @@
         $(document).ready(function () {
             showStep(currentStep);
 
-            $('.btn-next').click(function () {
+            $('.btnkov').click(function () {
                 if (currentStep < totalSteps) {
                     currentStep++;
                     showStep(currentStep);
@@ -119,7 +119,7 @@
                 }
             });
 
-            $('.btn-prev').click(function () {
+            $('.btnvissza').click(function () {
                 if (currentStep > 1) {
                     currentStep--;
                     showStep(currentStep);
