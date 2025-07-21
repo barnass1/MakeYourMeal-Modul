@@ -53,11 +53,11 @@
     </Reference>
     <Reference Include="Hotcakes.Commerce, Version=3.9.2.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\bin\Hotcakes.Commerce.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Website\dnndev.me\bin\Hotcakes.Commerce.dll</HintPath>
     </Reference>
     <Reference Include="Hotcakes.Modules, Version=3.9.2.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\bin\Hotcakes.Modules.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Website\dnndev.me\bin\Hotcakes.Modules.dll</HintPath>
     </Reference>
     <Reference Include="Hotcakes.Payment, Version=3.9.2.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -65,7 +65,7 @@
     </Reference>
     <Reference Include="Hotcakes.Web, Version=3.9.2.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\bin\Hotcakes.Web.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Website\dnndev.me\bin\Hotcakes.Web.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.ApplicationBlocks.Data, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
