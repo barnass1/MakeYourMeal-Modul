@@ -1,9 +1,9 @@
 <dotnetnuke type="Package" version="5.0">
 	<packages>
-		<package name="MakeYourMeal" type="Module" version="00.04.00">
+		<package name="MakeYourMeal" type="Module" version="01.00.00">
 			<friendlyName>MakeYourMeal</friendlyName>
 			<description>MakeYourMeal</description>
-			<iconFile>~/Icons/Sigma/Software_32X32_Standard.png</iconFile>
+			<iconFile>~/Icons/Sigma/Vendors_32X32_Standard.png</iconFile>
 			<owner>
 				<name>Wok and Roll</name>
 				<organization>Wok and Roll</organization>
@@ -21,13 +21,13 @@
 						<basePath>DesktopModules\MVC\MakeYourMeal</basePath>
 						<script type="Install">
 							<path>Providers\DataProviders\SqlDataProvider</path>
-							<name>00.04.00.SqlDataProvider</name>
-							<version>00.04.00</version>
+							<name>01.00.00.SqlDataProvider</name>
+							<version>01.00.00</version>
 						</script>
 						<script type="UnInstall">
 							<path>Providers\DataProviders\SqlDataProvider</path>
 							<name>Uninstall.SqlDataProvider</name>
-							<version>00.04.00</version>
+							<version>01.00.00</version>
 						</script>
 					</scripts>
 				</component>

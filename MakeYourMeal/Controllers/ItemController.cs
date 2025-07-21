@@ -9,6 +9,7 @@ using Hotcakes.Commerce;
 using Hotcakes.Commerce.Catalog;
 using Hotcakes.Commerce.Orders;
 using DotNetNuke.Entities.Portals;
+using Hotcakes.Commerce.Extensions;
 
 namespace BaBoMaZso.MakeYourMeal.Controllers
 {
@@ -25,83 +26,86 @@ namespace BaBoMaZso.MakeYourMeal.Controllers
         [HttpGet]
         public ActionResult Assemble()
         {
-            var model = new MealViewModel
+            try
             {
-                Pastas = LoadOptions("pastas"),
-                Sauces = LoadOptions("sauces"),
-                Toppings1 = LoadOptions("toppings1"),
-                Toppings2 = LoadOptions("toppings2"),
-                Extras = LoadOptions("extras")
-            };
+                var model = new MealViewModel
+                {
+                    Pastas = LoadOptions("pastas"),
+                    Sauces = LoadOptions("sauces"),
+                    Toppings1 = LoadOptions("toppings1"),
+                    Toppings2 = LoadOptions("toppings2"),
+                    Extras = LoadOptions("extras")
+                };
 
-            return View("Assemble", model);
+                return View("Assemble", model);
+            }
+            catch (Exception ex)
+            {
+                DotNetNuke.Services.Exceptions.Exceptions.LogException(ex);
+                return View("Error", new { message = ex.Message });
+            }
         }
 
         [HttpPost]
-        [DotNetNuke.Web.Mvc.Framework.ActionFilters.ValidateAntiForgeryToken]
         public ActionResult AddToCartAjax(MealViewModel model)
         {
             try
             {
-                var cart = _hcc.OrderServices.EnsureShoppingCart();
+                if (!ModelState.IsValid)
+                {
+                    return Json(new { success = false, message = "Érvénytelen adatok." });
+                }
 
-                AddProductToCart(model.SelectedPasta, cart);
-                AddProductToCart(model.SelectedSauce, cart);
-                AddProductsToCart(ParseSelectedItems(model.SelectedToppings1), cart);
-                AddProductsToCart(ParseSelectedItems(model.SelectedToppings2), cart);
-                AddProductsToCart(ParseSelectedItems(model.SelectedExtras), cart);
+                // Példa: a szükséges adatok kinyerése a formból
+                string productId = Request.Form["ProductId"];
+                string productBvin = Request.Form["bvin"];
+                string nev = Request.Form["ProductName"];
 
-                _hcc.OrderServices.Orders.Update(cart);
+                // Kosárba rakás
+                KosarbaRakas(productBvin, nev);
 
-                return Json(new { success = true });
+                // Kosár URL
+                string kosarUrl = "http://" + DotNetNuke.Entities.Portals.PortalSettings.Current.PortalAlias.HTTPAlias + "/Cart/";
+
+                return Json(new { success = true, redirectUrl = kosarUrl });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                DotNetNuke.Services.Exceptions.Exceptions.LogException(ex);
+                return Json(new { success = false, message = "Hiba történt: " + ex.Message });
             }
         }
 
-        private void AddProductToCart(string bvin, Order cart)
+        public bool KosarbaRakas(string bvin, string nev)
         {
-            if (string.IsNullOrWhiteSpace(bvin))
-                return;
 
-            var product = _hcc.CatalogServices.Products.Find(bvin);
-            if (product == null)
-                return;
+            var HccApp = HotcakesApplication.Current;
+            if (HccApp == null)
+            {
+                return false;
+            }
+
+            if (HccApp.OrderServices == null)
+            {
+                return false;
+            }
+
+            Order order = HccApp.OrderServices.CurrentShoppingCart();
+
+            if (order == null)
+            {
+                order = HccApp.OrderServices.EnsureShoppingCart();
+            }
 
             var lineItem = new LineItem
             {
-                ProductId = product.Bvin,
-                ProductName = product.ProductName,
-                Quantity = 1,
-                BasePricePerItem = product.SitePrice,
-                LineTotal = product.SitePrice,
-                ProductShortDescription = product.ShortDescription
+                ProductId = bvin,
+                ProductName = nev,
             };
 
-            _hcc.OrderServices.AddItemToOrder(cart, lineItem);
-        }
+            bool result = HccApp.AddToOrderAndSave(order, lineItem);
 
-
-        private void AddProductsToCart(IEnumerable<string> bvins, Order cart)
-        {
-            if (bvins == null)
-                return;
-
-            foreach (var bvin in bvins)
-            {
-                AddProductToCart(bvin, cart);
-            }
-        }
-
-        private IEnumerable<string> ParseSelectedItems(string csvItems)
-        {
-            if (string.IsNullOrWhiteSpace(csvItems))
-                return Enumerable.Empty<string>();
-
-            return csvItems.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                           .Select(x => x.Trim());
+            return result;
         }
 
         private List<ProductOptionViewModel> LoadOptions(string categorySlug)
@@ -120,10 +124,12 @@ namespace BaBoMaZso.MakeYourMeal.Controllers
             return products.Select(p => new ProductOptionViewModel
             {
                 Name = p.ProductName,
-                Value = p.Bvin,
+                Value = p.Bvin,               
+                Sku = p.Sku,                  
                 ImageUrl = GetProductImageUrl(p)
             }).ToList();
         }
+
 
         private string GetProductImageUrl(Product product)
         {
